@@ -35,8 +35,10 @@
 
     // ── Persistence (per-viewer convenience only) ────────
     const store = {
-      get(k, d) { try { const v = localStorage.getItem("e0lab11:" + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
-      set(k, v) { try { localStorage.setItem("e0lab11:" + k, JSON.stringify(v)); } catch {} },
+      get(k, d) { try { const v = localStorage.getItem("e0lab12:" + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+      set(k, v) { try { localStorage.setItem("e0lab12:" + k, JSON.stringify(v)); } catch {} },
+      // Forget every saved scene-lab setting (any version of the key prefix)
+      clear() { try { Object.keys(localStorage).filter((k) => k.startsWith("e0lab")).forEach((k) => localStorage.removeItem(k)); } catch {} },
     };
 
     // ── Scenes ───────────────────────────────────────────
@@ -70,8 +72,8 @@
     };
     const storedMap = store.get("map", {});
     const lab = {
-      type: okType(store.get("type", "mountains")),
-      preset: okPal(store.get("preset", "dusk")),
+      type: okType(store.get("type", "particles")),
+      preset: okPal(store.get("preset", "ember")),
       per: !!store.get("per", false),
       map: Object.fromEntries(["menu", ...TABS.map((t) => t.id)].map((k) => {
         const d = MAP_DEFAULT[k] || { type: "mountains", preset: "dusk" }, v = storedMap[k] || {};
@@ -80,11 +82,11 @@
       clock: !!store.get("clock", false),
       debug: 0,
       autoRes: store.get("autores", true) !== false,
-      pstyle: ["flow", "attractor", "galaxy", "shapes", "gravity", "swarm"].includes(store.get("pstyle")) ? store.get("pstyle") : "flow",
+      pstyle: ["flow", "attractor", "galaxy", "shapes", "gravity", "swarm"].includes(store.get("pstyle", "attractor")) ? store.get("pstyle", "attractor") : "attractor",
       attr: +store.get("attr", 0),
-      trail: +store.get("trail", .6),
-      pbright: +store.get("pbright", 1),
-      density: +store.get("density", 256),
+      trail: +store.get("trail", 1),
+      pbright: +store.get("pbright", .2),
+      density: +store.get("density", 512),
       pcolor: +store.get("pcolor", 0),
       res: +store.get("res", 1),
     };
@@ -698,6 +700,11 @@
     volEl.addEventListener("input", () => { Sound.setVol(+volEl.value); $("#lab-vol-out").textContent = Math.round(volEl.value * 100); });
     volEl.addEventListener("change", () => Sound.play("move"));
     sndBtn.setAttribute("aria-pressed", Sound.on); $("#lab-snd").checked = Sound.on;
+
+    $("#lab-forget").addEventListener("click", () => {
+      store.clear();
+      location.reload();
+    });
 
     $("#lab-copy").addEventListener("click", async (e) => {
       const used = lab.per ? [...new Set(Object.values(lab.map).map((v) => v.preset))] : [lab.clock ? clockPreset() : lab.preset];
