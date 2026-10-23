@@ -1,6 +1,6 @@
 ---
 title: "Shipped"
-weight: 2
+weight: 3
 display: "grid"
 itemType: "game"
 blurb: "Games our engineers have helped ship."

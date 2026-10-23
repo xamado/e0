@@ -1,6 +1,6 @@
 ---
 title: "Team"
-weight: 3
+weight: 2
 display: "team"
 blurb: "AAA engineers, from Buenos Aires to the world."
 intro: "AAA industry veterans who love programming, computer graphics and low-level systems."
