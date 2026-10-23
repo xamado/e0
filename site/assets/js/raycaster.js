@@ -24,7 +24,6 @@
   const START = { x: 1.5, y: 1.5, a: Math.PI / 2 };
   const FOV_PLANE = 0.66;                       // camera plane half-length (≈66° FOV)
   const WALL_A = "@%#*+=-:.", WALL_B = "%#*+=-:.."; // near → far; the B side is a step darker
-  const FLOOR = " .·:-=";                            // horizon → near
   const MAXD = 10;
 
   const cell = (x, y) => (MAP[y | 0] || "#")[x | 0] || "#";
@@ -122,9 +121,7 @@
               cls[r][c] = 2;
             } else { grid[r][c] = shade; cls[r][c] = 1; }
           } else {
-            const fd = (r - half) / half;           // 0 at horizon → 1 at the bottom
-            grid[r][c] = FLOOR[Math.min(FLOOR.length - 1, Math.floor(fd * FLOOR.length))];
-            cls[r][c] = 3;
+            grid[r][c] = " "; cls[r][c] = 0;        // floor left empty, like the ceiling
           }
         }
       }

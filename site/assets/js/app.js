@@ -413,6 +413,23 @@
       if (!narrow.matches) setTimeout(() => input.focus({ preventScroll: true }), 450);
     }
 
+    // Main-menu caption describing the background (content/_index.md → captions)
+    let capKey = "";
+    function updateCaption() {
+      const ty = activeType();
+      const key = ty === "particles" ? (lab.pstyle === "attractor" ? `particles-attractor-${lab.attr}` : `particles-${lab.pstyle}`) : ty;
+      const full = `${key}|${lab.density}`;
+      if (full === capKey) return;
+      capKey = full;
+      const c = (DATA.captions || {})[key];
+      const box = $("#scene-cap");
+      box.hidden = !c;
+      if (!c) return;
+      const count = (lab.density * lab.density).toLocaleString("en-US");
+      $("#scene-cap-t").textContent = c.title;
+      $("#scene-cap-d").textContent = (c.text || "").replace("{count}", count);
+    }
+
     function renderDetail(dir) {
       const t = TABS[tabIdx], r = t.rows[rowIdx];
       if (!r) return;
@@ -700,6 +717,7 @@
       shapeTimer += dt;
       if (lab.pstyle === "shapes" && shapeTimer > 9) { shape++; shapeTimer = 0; }
       if (engine) engine.setParticles({ style: lab.pstyle, attr: lab.attr, trail: lab.trail, bright: lab.pbright, density: lab.density, color: lab.pcolor, shape });
+      updateCaption();
       if (engine) engine.render({
         t: reduce ? 20 : (now - start) / 1000 + 20, dt, view: view.v, mouse: [m.x, m.y], palette: scene,
         debug: lab.debug, impulse, burst,

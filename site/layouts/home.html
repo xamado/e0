@@ -42,6 +42,7 @@
       </div>
       <nav aria-label="Main menu"><ul class="menu" id="menu"></ul></nav>
     </div>
+    <aside class="scene-cap stag" style="--i:10" id="scene-cap" aria-live="polite"><b class="caps" id="scene-cap-t"></b><span id="scene-cap-d"></span></aside>
     <footer class="bar caps stag" style="--i:9">
       <span class="copy hint">© <span class="year">{{ now.Year }}</span> Event Zero</span>
       <div class="hints hints--keys">
@@ -238,7 +239,7 @@
     {{- end -}}
     {{- $tabs = $tabs | append $tab -}}
   {{- end }}
-  <script type="application/json" id="site-data">{{ dict "email" $email "tabs" $tabs | jsonify | safeJS }}</script>
+  <script type="application/json" id="site-data">{{ dict "email" $email "tabs" $tabs "captions" (.Params.captions | default dict) | jsonify | safeJS }}</script>
 
   {{- /* Plain version of the same content for visitors without JavaScript and for crawlers */}}
   <noscript>
