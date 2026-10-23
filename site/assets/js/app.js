@@ -53,21 +53,9 @@
     const TYPES = window.E0_SCENES ? Object.keys(window.E0_SCENES.types) : ["mountains"];
     const okType = (t) => (TYPES.includes(t) ? t : "mountains");
     const okPal = (id) => (PRESETS[id] ? id : "dusk");
-    const MAP_DEFAULT = {
-      menu: { type: "mountains", preset: "dusk" }, services: { type: "terrain", preset: "golden" }, shipped: { type: "planet", preset: "night" },
-      team: { type: "particles", preset: "dusk" }, clients: { type: "ocean", preset: "dawn" }, engage: { type: "mountains", preset: "mist" },
-      contact: { type: "particles", preset: "night" },
-    };
-    const storedMap = store.get("map", {});
     const lab = {
       type: okType(store.get("type", "particles")),
       preset: okPal(store.get("preset", "ember")),
-      per: !!store.get("per", false),
-      map: Object.fromEntries(["menu", ...TABS.map((t) => t.id)].map((k) => {
-        const d = MAP_DEFAULT[k] || { type: "mountains", preset: "dusk" }, v = storedMap[k] || {};
-        return [k, { type: okType(v.type || d.type), preset: okPal(v.preset || d.preset) }];
-      })),
-      clock: !!store.get("clock", false),
       debug: 0,
       autoRes: store.get("autores", true) !== false,
       pstyle: ["flow", "attractor", "galaxy", "shapes", "gravity", "swarm"].includes(store.get("pstyle", "attractor")) ? store.get("pstyle", "attractor") : "attractor",
@@ -418,7 +406,7 @@
     // Main-menu caption describing the background (content/_index.md → captions)
     let capKey = "";
     function updateCaption() {
-      const ty = activeType();
+      const ty = lab.type;
       const key = ty === "particles" ? (lab.pstyle === "attractor" ? `particles-attractor-${lab.attr}` : `particles-${lab.pstyle}`) : ty;
       const full = `${key}|${lab.density}`;
       if (full === capKey) return;
@@ -733,45 +721,31 @@
     });
 
     // ── Scene lab ────────────────────────────────────────
-    const SCREENS = [["menu", "Menu"], ...TABS.map((t) => [t.id, t.label])];
     const SLIDERS = [
       ["sun", 1, "Sun height", .1, .85, .01], ["sun", 0, "Sun position", 0, 1, .01], ["sun", 2, "Sun size", .015, .16, .001],
       ["fogAmt", -1, "Fog", 0, 3, .05], ["cloud", -1, "Clouds", 0, 2, .05], ["stars", -1, "Stars", 0, 3, .05],
       ["aurora", -1, "Aurora", 0, 1.5, .05], ["embers", -1, "Embers", 0, 4, .05], ["rough", -1, "Roughness", .3, 2, .05],
     ];
     const labEl = $("#lab"), labBtn = $("#lab-btn"), sndBtn = $("#snd-btn");
-    const presetsEl = $("#lab-presets"), typesEl = $("#lab-types"), mapEl = $("#lab-map"), slidersEl = $("#lab-sliders");
+    const typesEl = $("#lab-types"), slidersEl = $("#lab-sliders");
     const typeLabel = (t) => (window.E0_SCENES ? E0_SCENES.types[t].label : t);
     const css = (c) => `rgb(${c.map((v) => Math.round(Math.min(1, v) * 255)).join(",")})`;
-    const screenKey = () => (state === "sub" ? TABS[tabIdx].id : "menu");
-    const clockPreset = () => { const h = new Date().getHours(); return h >= 5 && h < 8 ? "dawn" : h >= 8 && h < 17 ? "golden" : h >= 17 && h < 20 ? "dusk" : "night"; };
-    const activeId = () => (lab.clock ? clockPreset() : lab.per ? lab.map[screenKey()].preset : lab.preset);
-    const activeType = () => (lab.per ? lab.map[screenKey()].type : lab.type);
     const save = () => {
-      store.set("preset", lab.preset); store.set("type", lab.type); store.set("per", lab.per); store.set("map", lab.map);
-      store.set("clock", lab.clock);
+      store.set("preset", lab.preset); store.set("type", lab.type);
       store.set("autores", lab.autoRes); store.set("res", lab.res); store.set("grid", lab.grid); store.set("gridamt", lab.gridAmt);
       store.set("pstyle", lab.pstyle); store.set("attr", lab.attr); store.set("trail", lab.trail);
       store.set("pbright", lab.pbright); store.set("density", lab.density); store.set("pcolor", lab.pcolor);
     };
 
     function applyScene() {
-      const P = PRESETS[activeId()];
+      const P = PRESETS[lab.preset];
       sceneTarget = P;
       document.documentElement.style.setProperty("--sun", P.accent);
-      if (engine) engine.setScene(activeType());
+      if (engine) engine.setScene(lab.type);
       refreshLab();
     }
 
-    presetsEl.innerHTML = Object.entries(PRESETS).map(([id, P]) =>
-      `<button class="chip" type="button" data-id="${id}"><i style="background:linear-gradient(${css(P.top)}, ${css(P.mid)} 45%, ${css(P.hor)} 70%, ${css(P.near)} 72%)"></i>${P.name}</button>`).join("");
-    presetsEl.addEventListener("click", (e) => {
-      const b = e.target.closest(".chip"); if (!b) return;
-      if (lab.per) lab.map[screenKey()].preset = b.dataset.id; else lab.preset = b.dataset.id;
-      if (lab.clock) lab.clock = false;
-      save(); Sound.play("move"); applyScene();
-    });
-    // ── Public palette picker (top-right swatches); mirrors the lab's palette chips ──
+    // ── Palette picker (top-right swatches) ──
     const palBtn = $("#pal-btn"), palPop = $("#palpop");
     palPop.innerHTML = Object.entries(PRESETS).map(([id, P]) =>
       `<button type="button" role="radio" data-id="${id}" title="${P.name}" aria-label="${P.name}" style="--a:${css(P.hor)};--b:${css(P.mid)};--c:${P.accent}"></button>`).join("");
@@ -784,8 +758,7 @@
     palPop.addEventListener("click", (e) => {
       const b = e.target.closest("button"); if (!b) return;
       e.stopPropagation();
-      if (lab.per) lab.map[screenKey()].preset = b.dataset.id; else lab.preset = b.dataset.id;
-      if (lab.clock) lab.clock = false;
+      lab.preset = b.dataset.id;
       save(); Sound.play("move"); applyScene();
     });
     addEventListener("click", (e) => { if (!e.target.closest(".palpick")) togglePal(false); });
@@ -793,17 +766,10 @@
     typesEl.innerHTML = TYPES.map((t) => `<button class="chip" type="button" data-t="${t}">${esc(typeLabel(t))}</button>`).join("");
     typesEl.addEventListener("click", (e) => {
       const b = e.target.closest(".chip"); if (!b) return;
-      if (lab.per) lab.map[screenKey()].type = b.dataset.t; else lab.type = b.dataset.t;
+      lab.type = b.dataset.t;
       save(); Sound.play("move"); applyScene();
     });
 
-    const opts = Object.entries(PRESETS).map(([id, P]) => `<option value="${id}">${P.name}</option>`).join("");
-    const typeOpts = TYPES.map((t) => `<option value="${t}">${esc(typeLabel(t))}</option>`).join("");
-    mapEl.innerHTML = SCREENS.map(([k, label]) => `<span data-k="${k}">${esc(label)}</span>
-      <select data-k="${k}" data-f="type" aria-label="Scene for ${esc(label)}">${typeOpts}</select>
-      <select data-k="${k}" data-f="preset" aria-label="Palette for ${esc(label)}">${opts}</select>`).join("");
-    mapEl.addEventListener("change", (e) => { lab.map[e.target.dataset.k][e.target.dataset.f] = e.target.value; save(); applyScene(); });
-    $("#lab-clock").addEventListener("change", (e) => { lab.clock = e.target.checked; save(); applyScene(); });
     $("#lab-view").addEventListener("change", (e) => setView(+e.target.value));
     const setGrid = (v) => { lab.grid = v; $("#lab-grid").checked = v; save(); Sound.play("tab"); };
     $("#lab-grid").addEventListener("change", (e) => setGrid(e.target.checked));
@@ -859,39 +825,29 @@
       if (labEl.classList.contains("is-open")) { $("#lab-perf").textContent = txt; drawGraph($("#lab-graph")); }
       if (lab.debug) { $("#dbg-perf").textContent = txt; drawGraph($("#dbg-graph")); }
     }
-    $("#lab-per").addEventListener("change", (e) => { lab.per = e.target.checked; save(); applyScene(); });
 
     slidersEl.innerHTML = SLIDERS.map(([k, j, label, min, max, step], n) =>
       `<label class="slider"><span>${label}</span><input type="range" data-n="${n}" min="${min}" max="${max}" step="${step}"><output></output></label>`).join("");
     slidersEl.addEventListener("input", (e) => {
       const [k, j] = SLIDERS[+e.target.dataset.n];
-      const P = PRESETS[activeId()], v = +e.target.value;
+      const P = PRESETS[lab.preset], v = +e.target.value;
       if (j >= 0) P[k][j] = v; else P[k] = v;
       e.target.nextElementSibling.textContent = v.toFixed(2);
       store.set("presets", PRESETS);
     });
     $("#lab-reset").addEventListener("click", () => {
-      const id = activeId();
+      const id = lab.preset;
       PRESETS[id] = clone(DEFAULTS[id]);
       store.set("presets", PRESETS);
       applyScene();
     });
 
     function refreshLab() {
-      const id = activeId(), P = PRESETS[id];
-      $("#lab-where").textContent = lab.per ? SCREENS.find(([k]) => k === screenKey())[1] : "All screens";
+      const id = lab.preset, P = PRESETS[id];
       $("#lab-editing").textContent = P.name;
-      presetsEl.querySelectorAll(".chip").forEach((c) => c.classList.toggle("is-on", c.dataset.id === id));
       palPop.querySelectorAll("button").forEach((c) => { c.classList.toggle("is-on", c.dataset.id === id); c.setAttribute("aria-checked", c.dataset.id === id); });
-      typesEl.querySelectorAll(".chip").forEach((c) => c.classList.toggle("is-on", c.dataset.t === activeType()));
-      $("#lab-per").checked = lab.per;
-      mapEl.hidden = !lab.per;
-      mapEl.querySelectorAll("select").forEach((s) => (s.value = lab.map[s.dataset.k][s.dataset.f]));
-      $("#lab-clock").checked = lab.clock;
-      $("#lab-clock-note").textContent = lab.clock
-        ? `It's ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} here, so: ${PRESETS[clockPreset()].name}. Dawn 5–8, Golden 8–17, Dusk 17–20, Night after.`
-        : "";
-      $("#lab-particles").hidden = activeType() !== "particles";
+      typesEl.querySelectorAll(".chip").forEach((c) => c.classList.toggle("is-on", c.dataset.t === lab.type));
+      $("#lab-particles").hidden = lab.type !== "particles";
       pstylesEl.querySelectorAll(".chip").forEach((c) => c.classList.toggle("is-on", c.dataset.p === lab.pstyle));
       $("#lab-pstyle-name").textContent = PSTYLES.find(([id]) => id === lab.pstyle)[1];
       $("#lab-attr").hidden = lab.pstyle !== "attractor";
@@ -906,7 +862,6 @@
       $("#lab-gridamt").value = lab.gridAmt; $("#lab-gridamt-out").textContent = lab.gridAmt.toFixed(3);
       $("#lab-res").disabled = lab.autoRes;
       $("#lab-res").value = lab.res; $("#lab-res-out").textContent = Math.round(lab.res * 100) + "%";
-      mapEl.querySelectorAll("span").forEach((s) => s.classList.toggle("is-here", s.dataset.k === screenKey()));
       slidersEl.querySelectorAll("input").forEach((inp) => {
         const [k, j] = SLIDERS[+inp.dataset.n];
         const v = j >= 0 ? P[k][j] : P[k];
@@ -943,12 +898,11 @@
     });
 
     $("#lab-copy").addEventListener("click", async (e) => {
-      const used = lab.per ? [...new Set(Object.values(lab.map).map((v) => v.preset))] : [lab.clock ? clockPreset() : lab.preset];
       const out = {
-        perSection: lab.per, scene: lab.type, palette: lab.preset, clock: lab.clock, map: lab.per ? lab.map : undefined,
+        scene: lab.type, palette: lab.preset,
         grid: lab.grid ? lab.gridAmt : 0,
         particles: { style: lab.pstyle, attractor: lab.attr, trails: lab.trail, brightness: lab.pbright, count: lab.density * lab.density, colour: lab.pcolor },
-        palettes: Object.fromEntries(used.map((id) => [id, PRESETS[id]])),
+        palettes: { [lab.preset]: PRESETS[lab.preset] },
       };
       const btn = e.currentTarget;
       try { await navigator.clipboard.writeText(JSON.stringify(out, null, 1)); btn.textContent = "Copied!"; }
