@@ -504,7 +504,10 @@ void main(){
     vec3 q = rk2(rk2(p, hs2), hs2);
     v = (q - p) / max(dt, 1e-4);
     p = q + (h - .5) * attrExtent() * .25 * uImpulse;
-    if (any(isnan(p)) || length(p - c) > attrExtent() * 1.5) p = c + (h3(id + uT) - .5) * attrExtent() * .2;
+    // Re-seed particles that blew up, escaped, or got trapped on an equilibrium point
+    // (e.g. Lorenz's origin: once x = y = 0 — denormals flush to zero on GPUs — it never moves again).
+    bool stuck = length(attr(p)) < attrExtent() * .01;
+    if (any(isnan(p)) || length(p - c) > attrExtent() * 1.5 || stuck) p = c + (h3(id + uT) - .5) * attrExtent() * .2;
   } else if (uStyle == 2) {                // ── Galaxy: stacked rotated ellipses keep the arms stable
     float a = .03 + pow(h.x, .7) * .95;
     if (reset) { w = h.y * 6.2832; vw = 0.; }

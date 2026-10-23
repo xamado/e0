@@ -12,7 +12,7 @@
   <link rel="icon" href="{{ "favicon.svg" | relURL }}" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   {{- $css := resources.Get "css/site.css" | minify | fingerprint }}
   <link rel="stylesheet" href="{{ $css.RelPermalink }}" integrity="{{ $css.Data.Integrity }}">
 </head>
@@ -29,7 +29,7 @@
       <p class="tagline caps">{{ .Params.tagline }}</p>
       <p class="press caps">{{ .Params.press }}</p>
     </div>
-    <p class="splash__foot caps">© <span class="year">{{ now.Year }}</span> Event Zero</p>
+    <p class="splash__foot caps"><span class="copy hint">© <span class="year">{{ now.Year }}</span> Event Zero</span></p>
   </section>
 
   <!-- MAIN MENU -->
@@ -43,10 +43,7 @@
       <nav aria-label="Main menu"><ul class="menu" id="menu"></ul></nav>
     </div>
     <footer class="bar caps stag" style="--i:9">
-      <div class="hints">
-        <a class="hint" href="mailto:{{ site.Params.email }}">{{ site.Params.email }}</a>
-        <span class="hint">© <span class="year">{{ now.Year }}</span> Event Zero</span>
-      </div>
+      <span class="copy hint">© <span class="year">{{ now.Year }}</span> Event Zero</span>
       <div class="hints hints--keys">
         <span class="hint"><span class="glyph"><span data-kb>↑↓</span><span data-pad>✥</span></span>Navigate</span>
         <span class="hint"><span class="glyph glyph--a"><span data-kb>Enter</span><span data-pad>A</span></span>Select</span>
@@ -72,7 +69,7 @@
     </div>
 
     <footer class="sub__foot caps">
-      <span class="desc" id="desc"></span>
+      <span class="copy hint">© <span class="year">{{ now.Year }}</span> Event Zero</span>
       <div class="hints">
         <span class="hint hint--kbonly"><span class="glyph"><span data-kb id="nav-kb">↑↓</span><span data-pad>✥</span></span>Navigate</span>
         <span class="hint hint--kbonly"><span class="glyph glyph--a"><span data-kb>Enter</span><span data-pad>A</span></span>Select</span>
@@ -209,6 +206,11 @@
     {{- end -}}
     {{- $tab := dict "id" .Section "label" .Title "blurb" .Params.blurb "intro" .Params.intro "rows" $rows -}}
     {{- with .Params.display }}{{ $tab = merge $tab (dict "layout" .) }}{{ end -}}
+    {{- if eq .Params.display "terminal" -}}
+      {{- $banner := slice -}}
+      {{- range .Params.banner }}{{ $banner = $banner | append (replace . "{email}" $email) }}{{ end -}}
+      {{- $tab = merge $tab (dict "terminal" (dict "banner" $banner "tips" .Params.tips "endpoint" (site.Params.contactEndpoint | default "") "key" (site.Params.contactKey | default ""))) -}}
+    {{- end -}}
     {{- if eq .Params.display "team" -}}
       {{- /* Team is a single designed page: all its content lives in team/_index.md */ -}}
       {{- $logos := slice -}}
@@ -236,6 +238,9 @@
       <section id="{{ .Section }}">
         <h2>{{ .Title }}</h2>
         {{ with .Params.intro }}<p>{{ . }}</p>{{ end }}
+        {{- if eq .Params.display "terminal" }}
+        <p><a href="mailto:{{ $email }}">{{ $email }}</a></p>
+        {{- end }}
         {{- if eq .Params.display "team" }}
         <p>{{ delimit .Params.headline " " }}</p>
         <p>{{ .Params.lede }}</p>

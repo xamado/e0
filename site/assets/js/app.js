@@ -10,7 +10,7 @@
     const narrow = matchMedia("(max-width: 900px)");
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const body = document.body;
-    const menuEl = $("#menu"), tabsEl = $("#tabs"), pane = $("#pane"), detail = $("#detail"), desc = $("#desc"), meta = $("#sub-meta"), sweep = $("#sweep");
+    const menuEl = $("#menu"), tabsEl = $("#tabs"), pane = $("#pane"), detail = $("#detail"), desc = document.createElement("span"),  /* footer description removed; kept as a no-op target */ meta = $("#sub-meta"), sweep = $("#sweep");
     document.querySelectorAll(".year").forEach((y) => (y.textContent = new Date().getFullYear()));
     const pad2 = (n) => String(n).padStart(2, "0");
     const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -231,6 +231,138 @@
     }
     setInterval(tickClocks, 15000);
 
+    // ── Contact: a small terminal that composes an email ──
+    // Flow: name → email → company (optional) → message (multi-line) → confirm → send.
+    // Sends via params.contactEndpoint (JSON POST) when set, otherwise opens a mailto: link.
+    function terminalHtml(t) {
+      return `<div class="term-wrap">
+        <div class="term" role="region" aria-label="Contact terminal">
+          <div class="term__bar"><i></i><i></i><i></i><span>guest@event-0: ~/contact</span></div>
+          <div class="term__body">
+            <div class="term__out" aria-live="polite"></div>
+            <label class="term__line"><span class="term__prompt"></span><input class="term__in" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Terminal input"></label>
+          </div>
+        </div>
+      </div>`;
+    }
+    function mountTerminal(root, cfg) {
+      const out = root.querySelector(".term__out"), input = root.querySelector(".term__in"), promptEl = root.querySelector(".term__prompt");
+      const scroller = root.querySelector(".term__body");
+      const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      let step, msg, lines, busy = false;
+      const print = (text, cls = "") => {
+        const p = document.createElement("div");
+        p.className = "term__o " + cls;
+        p.textContent = text;
+        out.appendChild(p);
+        scroller.scrollTop = scroller.scrollHeight;
+      };
+      const echo = (text) => print(promptEl.textContent + text, "echo");
+      const STEPS = {
+        name: { prompt: "? name › " },
+        email: { prompt: "? email › " },
+        company: { prompt: "? company (optional) › " },
+        message: { prompt: "  " },
+        confirm: { prompt: `Send this to ${EMAIL}? [Y/n] › ` },
+        done: { prompt: "guest@event-0:~$ " },
+      };
+      const go = (s) => { step = s; promptEl.textContent = STEPS[s].prompt; input.value = ""; };
+      const start = (fresh) => {
+        if (fresh) out.textContent = "";
+        msg = { name: "", email: "", company: "", message: "" }; lines = [];
+        cfg.banner.forEach((b) => print(b, "dim"));
+        print("Type `help` for commands.", "dim");
+        print("guest@event-0:~$ ./contact", "echo");
+        go("name");
+      };
+      const help = () => {
+        print("commands: help · clear · restart · email · exit", "dim");
+        print("Answer each prompt and press Enter. Finish the message with an empty line.", "dim");
+        if (cfg.tips?.length) print("Good things to include: " + cfg.tips.join("; ") + ".", "dim");
+      };
+      async function send() {
+        busy = true; input.disabled = true;
+        const subject = `New project enquiry from ${msg.name}${msg.company ? ` (${msg.company})` : ""}`;
+        const bodyText = `${msg.message}\n\n— ${msg.name}${msg.company ? `, ${msg.company}` : ""}\n${msg.email}`;
+        if (cfg.endpoint) {
+          print("sending…", "dim");
+          try {
+            const r = await fetch(cfg.endpoint, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" },
+              body: JSON.stringify({
+                ...(cfg.key ? { access_key: cfg.key } : {}),   // Web3Forms
+                name: msg.name, email: msg.email, company: msg.company, message: msg.message, subject,
+                from_name: "event-0.com contact", replyto: msg.email, _replyto: msg.email,
+                botcheck: "", _gotcha: "",                      // honeypots (Web3Forms / Formspree)
+              }) });
+            if (!r.ok) throw new Error(r.status);
+            Sound.play("select");
+            print("✓ Message sent. We'll get back to you soon.", "ok");
+          } catch (err) {
+            Sound.play("bump");
+            print(`✗ Couldn't send (${err.message}). Please email ${EMAIL} directly.`, "err");
+          }
+        } else {
+          Sound.play("select");
+          location.href = `mailto:${EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+          print("✓ Opening your mail app with the message ready to send.", "ok");
+          print(`  Nothing happened? Email ${EMAIL} directly.`, "dim");
+        }
+        busy = false; input.disabled = false;
+        print("Type `restart` to write another message.", "dim");
+        go("done"); input.focus();
+      }
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") { input.blur(); e.stopPropagation(); return; }
+        if (e.key === "l" && e.ctrlKey) { e.preventDefault(); out.textContent = ""; return; }
+        if (e.key !== "Enter" || busy) return;
+        e.preventDefault();
+        const raw = input.value, v = raw.trim();
+        echo(raw);
+        input.value = "";
+        const cmd = v.toLowerCase();
+        // Commands work at any prompt except inside the message body
+        if (step !== "message" || lines.length === 0) {
+          if (cmd === "help") { help(); input.value = ""; return; }
+          if (cmd === "clear") { out.textContent = ""; input.value = ""; return; }
+          if (cmd === "restart") { Sound.play("back"); start(true); return; }
+          if (cmd === "email") { print(EMAIL); input.value = ""; return; }
+          if (cmd === "exit") { back(); return; }
+        }
+        Sound.play("move");
+        if (step === "name") {
+          if (!v) return print("  please tell us your name", "err");
+          msg.name = v; go("email");
+        } else if (step === "email") {
+          if (!EMAIL_RE.test(v)) return print("  that doesn't look like an email address", "err");
+          msg.email = v; go("company");
+        } else if (step === "company") {
+          msg.company = v;
+          print("? message (finish with an empty line)", "q");
+          if (cfg.tips?.length) print("  e.g. " + cfg.tips.slice(0, 3).join(" · "), "dim");
+          go("message");
+        } else if (step === "message") {
+          if (v || lines.length === 0) {
+            if (!v) return print("  write at least a line", "err");
+            lines.push(raw.replace(/\s+$/, "")); input.value = ""; return;
+          }
+          msg.message = lines.join("\n");
+          print("──────────────", "dim");
+          print(`from: ${msg.name} <${msg.email}>${msg.company ? ` · ${msg.company}` : ""}`, "dim");
+          print(`${lines.length} line${lines.length > 1 ? "s" : ""}, ${msg.message.length} characters`, "dim");
+          go("confirm");
+        } else if (step === "confirm") {
+          if (cmd === "" || cmd === "y" || cmd === "yes") send();
+          else { print("  cancelled. Type `restart` to begin again.", "dim"); go("done"); }
+        } else {
+          print(`${v.split(" ")[0]}: command not found. Try \`help\`.`, "err");
+          input.value = "";
+        }
+      });
+      root.querySelector(".term").addEventListener("click", () => { if (!window.getSelection().toString()) input.focus(); });
+      start(false);
+      if (!narrow.matches) setTimeout(() => input.focus({ preventScroll: true }), 450);
+    }
+
     function renderDetail(dir) {
       const t = TABS[tabIdx], r = t.rows[rowIdx], d = r.d;
       if (t.layout === "grid") {
@@ -278,16 +410,18 @@
       tabBtns.forEach((b, k) => b.setAttribute("aria-selected", k === tabIdx));
       tabBtns[tabIdx].scrollIntoView({ block: "nearest", inline: "nearest" });
       meta.textContent = `0${tabIdx + 1} / 0${TABS.length}`;
-      const grid = t.layout === "grid", page = t.layout === "page" || t.layout === "team";
+      const grid = t.layout === "grid", page = t.layout === "page" || t.layout === "team" || t.layout === "terminal";
       body.classList.toggle("is-grid", grid);
       body.classList.toggle("is-page", page);
+      body.classList.toggle("is-term", t.layout === "terminal");
       $("#nav-kb").textContent = grid ? "↑↓←→" : "↑↓";
       const head = `<span class="pane__kicker caps">0${tabIdx + 1} / ${esc(t.label)}</span><h2>${esc(t.label)}</h2><p class="pane__intro">${esc(t.intro)}</p>`;
       if (page) {
         // Everything on one scrollable page; no list/detail
-        pane.innerHTML = t.team ? teamHtml(t) : `<div class="pg"><div>${head}</div><div class="pg__body">${t.rows.map((r) =>
+        pane.innerHTML = t.terminal ? `<div class="tc"><div class="tc__side">${head}<p class="term__alt">No terminal person? Email us at <a href="mailto:${EMAIL}">${EMAIL}</a></p></div>${terminalHtml(t)}</div>` : t.team ? teamHtml(t) : `<div class="pg"><div>${head}</div><div class="pg__body">${t.rows.map((r) =>
           `<section class="pg__block${r.d.logos ? " pg__block--wide" : ""}"><span class="detail__k caps">${esc(r.meta || "")}</span><h3>${esc(r.label)}</h3>${r.d.bodyHtml || ""}${extrasHtml(r.d)}</section>`).join("")}</div></div>`;
         tickClocks();
+        if (t.terminal) mountTerminal(pane, t.terminal);
         pane.querySelectorAll("[data-goto]").forEach((b) => b.addEventListener("click", () => {
           const i = TABS.findIndex((x) => x.id === b.dataset.goto);
           if (i >= 0) renderTab(i, i > tabIdx ? 1 : -1);
@@ -411,6 +545,7 @@
     // ── Input: keyboard ──────────────────────────────────
     addEventListener("keydown", (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.target.matches && e.target.matches("input, select, textarea")) { if (e.key === "Escape") toggleLab(false); return; }
       if (e.key === "p" || e.key === "P") { e.preventDefault(); return toggleLab(); }
       if (e.key === "m" || e.key === "M") { e.preventDefault(); return setSound(!Sound.on); }
       if (e.key === "v" || e.key === "V") { e.preventDefault(); return setView((lab.debug + 1) % 5); }

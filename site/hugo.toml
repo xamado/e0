@@ -9,6 +9,12 @@ disableKinds = ["taxonomy", "term", "rss"]
 [params]
   description = "Event Zero is an engineering studio for AAA games: co-development, performance optimization, rendering, low-level systems and console hardware."
   email = "hello@event-0.com"
+  # Contact terminal delivery. Leave contactEndpoint empty to open the visitor's mail app instead.
+  #   Web3Forms: contactEndpoint = "https://api.web3forms.com/submit", contactKey = "<access key>"
+  #   Formspree: contactEndpoint = "https://formspree.io/f/<form id>", contactKey = ""
+  # The access key is meant to be public (it only allows sending to your inbox).
+  contactEndpoint = "https://api.web3forms.com/submit"
+  contactKey = "08f99e5c-87f2-4078-9c05-d180b7d4e032"
 
 [imaging.webp]
   quality = 82
