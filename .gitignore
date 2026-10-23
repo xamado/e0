@@ -1,0 +1,10 @@
+# Hugo build output and caches
+site/public/
+site/resources/_gen/
+site/.hugo_build.lock
+.hugo_build.lock
+
+# Design explorations and the first prototype stay local (not part of the site)
+/versions/
+/index.html
+/assets/

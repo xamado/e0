@@ -1,0 +1,8 @@
+---
+title: "The Sandbox (Animoca)"
+weight: 7
+year: "2021"
+platforms: "PC · Mac"
+role: "Role TBD"
+art: "radial-gradient(circle at 65% 35%, #8dffcf, transparent 45%), linear-gradient(160deg, #1c6fd1, #160f3a)"
+---

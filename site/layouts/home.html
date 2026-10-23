@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ site.Title }}</title>
+  <meta name="description" content="{{ site.Params.description }}">
+  <meta property="og:title" content="{{ site.Title }}">
+  <meta property="og:description" content="{{ site.Params.description }}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ .Permalink }}">
+  <link rel="icon" href="{{ "favicon.svg" | relURL }}" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+  {{- $css := resources.Get "css/site.css" | minify | fingerprint }}
+  <link rel="stylesheet" href="{{ $css.RelPermalink }}" integrity="{{ $css.Data.Integrity }}">
+</head>
+<body class="is-splash">
+  <canvas id="sky" aria-hidden="true"></canvas>
+  <div class="shade shade--main"></div>
+  <div class="shade shade--sub"></div>
+
+  <!-- SPLASH -->
+  <section class="screen splash" id="splash" aria-label="Title screen">
+    <div class="splash__inner">
+      <div class="emblem"><span>e0</span></div>
+      <h1 class="logo">Event Zero</h1>
+      <p class="tagline caps">{{ .Params.tagline }}</p>
+      <p class="press caps">{{ .Params.press }}</p>
+    </div>
+    <p class="splash__foot caps">© <span class="year">{{ now.Year }}</span> Event Zero</p>
+  </section>
+
+  <!-- MAIN MENU -->
+  <section class="screen main" aria-label="Main menu">
+    <div class="main__title">
+      <div class="lockup">
+        <div class="emblem stag" style="--i:0"><span>e0</span></div>
+        <h1 class="logo stag" style="--i:1">Event Zero</h1>
+        <p class="tagline caps stag" style="--i:2">{{ .Params.tagline }}</p>
+      </div>
+      <nav aria-label="Main menu"><ul class="menu" id="menu"></ul></nav>
+    </div>
+    <footer class="bar caps stag" style="--i:9">
+      <div class="hints">
+        <span class="hint"><span class="glyph"><span data-kb>↑↓</span><span data-pad>✥</span></span>Navigate</span>
+        <span class="hint"><span class="glyph glyph--a"><span data-kb>Enter</span><span data-pad>A</span></span>Select</span>
+      </div>
+      <div class="hints">
+        <a class="hint" href="mailto:{{ site.Params.email }}">{{ site.Params.email }}</a>
+        <span class="hint">© <span class="year">{{ now.Year }}</span> Event Zero</span>
+      </div>
+    </footer>
+  </section>
+
+  <!-- SUB-SCREEN -->
+  <section class="screen sub" aria-label="Section">
+    <header class="sub__top">
+      <button class="brand" type="button" id="brand" aria-label="Event Zero, back to main menu"><span class="emblem emblem--sm"><span>e0</span></span>Event Zero</button>
+      <div class="tabs">
+        <button class="bumper" type="button" data-tab-step="-1" aria-label="Previous tab"><span class="glyph glyph--bumper"><span data-kb>Q</span><span data-pad>LB</span></span></button>
+        <div role="tablist" id="tabs"></div>
+        <button class="bumper" type="button" data-tab-step="1" aria-label="Next tab"><span class="glyph glyph--bumper"><span data-kb>E</span><span data-pad>RB</span></span></button>
+      </div>
+      <span class="sub__meta caps" id="sub-meta">01 / 05</span>
+    </header>
+
+    <div class="sub__body">
+      <div class="pane" id="pane"></div>
+      <article class="detail" id="detail" aria-live="polite"></article>
+    </div>
+
+    <footer class="sub__foot caps">
+      <span class="desc" id="desc"></span>
+      <div class="hints">
+        <span class="hint hint--kbonly"><span class="glyph"><span data-kb id="nav-kb">↑↓</span><span data-pad>✥</span></span>Navigate</span>
+        <span class="hint hint--kbonly"><span class="glyph glyph--a"><span data-kb>Enter</span><span data-pad>A</span></span>Select</span>
+        <button class="hint" type="button" id="back"><span class="glyph glyph--b"><span data-kb>Esc</span><span data-pad>B</span></span>Back</button>
+      </div>
+    </footer>
+  </section>
+
+  <div class="sweep" id="sweep"></div>
+
+  <!-- Tools: sound toggle + scene lab (for trying variations) -->
+  <div class="tools">
+    <button class="tool" id="snd-btn" type="button" aria-pressed="true" title="Sound (M)">
+      <svg class="on" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 6h3l4-3v10l-4-3H2z"/><path d="M11.5 5.5a3.5 3.5 0 0 1 0 5M13.5 3.5a6.5 6.5 0 0 1 0 9"/></svg>
+      <svg class="off" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 6h3l4-3v10l-4-3H2z"/><path d="M11 6l4 4M15 6l-4 4"/></svg>
+      <span>Sound</span>
+    </button>
+    <button class="tool" id="lab-btn" type="button" aria-expanded="false" aria-controls="lab" title="Scene lab (P)">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/><circle cx="5" cy="4" r="1.6" fill="#120a24"/><circle cx="10" cy="8" r="1.6" fill="#120a24"/><circle cx="7" cy="12" r="1.6" fill="#120a24"/></svg>
+      <span>Scene</span>
+    </button>
+  </div>
+
+  <aside class="lab" id="lab" aria-label="Scene lab">
+    <div class="lab__head"><h2>Scene lab</h2><button type="button" id="lab-close" aria-label="Close">✕</button></div>
+    <section>
+      <p class="lab__label caps"><span>This screen</span><b id="lab-where">All screens</b></p>
+      <p class="lab__sub caps">Scene</p>
+      <div class="chips chips--types" id="lab-types"></div>
+      <p class="lab__sub caps">Palette</p>
+      <div class="chips" id="lab-presets"></div>
+      <label class="check"><input type="checkbox" id="lab-per"> Different scene per section</label>
+      <div class="map" id="lab-map" hidden></div>
+      <label class="check"><input type="checkbox" id="lab-clock"> Palette follows the visitor's clock</label>
+      <small id="lab-clock-note"></small>
+    </section>
+    <section id="lab-particles" hidden>
+      <p class="lab__label caps"><span>Particles</span><b id="lab-pstyle-name">Flow</b></p>
+      <div class="chips chips--types" id="lab-pstyles"></div>
+      <select class="full" id="lab-attr" aria-label="Attractor">
+        <option value="0">Lorenz (butterfly)</option><option value="1">Aizawa</option><option value="2">Thomas</option><option value="3">Halvorsen</option>
+      </select>
+      <label class="slider"><span>Trails</span><input type="range" id="lab-trail" min="0" max="1" step="0.05"><output id="lab-trail-out"></output></label>
+      <label class="slider"><span>Brightness</span><input type="range" id="lab-pbright" min="0.2" max="3" step="0.05"><output id="lab-pbright-out"></output></label>
+      <select class="full" id="lab-density" aria-label="Particle count">
+        <option value="128">16k particles</option><option value="256">65k particles</option><option value="384">147k particles</option><option value="512">262k particles</option>
+      </select>
+      <select class="full" id="lab-pcolor" aria-label="Particle colour">
+        <option value="0">Colour: palette</option><option value="1">Colour: speed</option><option value="2">Colour: spectrum</option>
+      </select>
+      <small id="lab-pnote">Selecting a menu item or switching tabs sends a burst through the particles.</small>
+    </section>
+    <section>
+      <p class="lab__label caps"><span>Tweak palette</span><b id="lab-editing">Dusk</b></p>
+      <div id="lab-sliders" style="display:grid;gap:8px"></div>
+      <button class="lab__btn" type="button" id="lab-reset">Reset this palette</button>
+    </section>
+    <section>
+      <p class="lab__label caps"><span>Render view</span><span>V cycles</span></p>
+      <select class="full" id="lab-view" aria-label="Render view">
+        <option value="0">Final image</option><option value="1">Wireframe</option><option value="2">Normals</option>
+        <option value="3">Depth</option><option value="4">Cost heat map</option>
+      </select>
+    </section>
+    <section>
+      <p class="lab__label caps"><span>Performance</span></p>
+      <p class="perf" id="lab-perf">–</p>
+      <canvas class="graph" id="lab-graph" width="300" height="44"></canvas>
+      <label class="check"><input type="checkbox" id="lab-autores"> Auto resolution (keeps frames on budget)</label>
+      <label class="slider"><span>Resolution</span><input type="range" id="lab-res" min="0.3" max="1" step="0.05"><output id="lab-res-out"></output></label>
+    </section>
+    <section>
+      <p class="lab__label caps"><span>Sound</span></p>
+      <label class="check"><input type="checkbox" id="lab-snd"> UI sounds</label>
+      <label class="slider"><span>Volume</span><input type="range" id="lab-vol" min="0" max="1" step="0.05"><output id="lab-vol-out"></output></label>
+    </section>
+    <div class="lab__foot caps">
+      <button class="lab__btn" type="button" id="lab-copy">Copy settings</button>
+      <span>P lab · V view · M mute</span>
+    </div>
+  </aside>
+
+  <div class="dbg" id="dbg" aria-live="polite">
+    <span class="caps">View · <b id="dbg-name">Wireframe</b></span>
+    <canvas id="dbg-graph" width="280" height="60"></canvas>
+    <span class="perf" id="dbg-perf"></span>
+    <span class="glyph">V</span>
+  </div>
+
+
+  {{- /* Menu content compiled from the Markdown files in content/. Read by assets/js/app.js. */ -}}
+  {{- $email := site.Params.email -}}
+  {{- $tabs := slice -}}
+  {{- range .Sections.ByWeight -}}
+    {{- $sec := . -}}
+    {{- $rows := slice -}}
+    {{- range .Pages.ByWeight -}}
+      {{- $d := dict "body" (.Plain | htmlUnescape | strings.TrimSpace) "bodyHtml" (.Content | string | strings.TrimSpace) -}}
+      {{- with .Params.kicker }}{{ $d = merge $d (dict "k" .) }}{{ end -}}
+      {{- with .Params.variant }}{{ $d = merge $d (dict "type" .) }}{{ end -}}
+      {{- with .Params.bullets }}{{ $d = merge $d (dict "bul" .) }}{{ end -}}
+      {{- with .Params.tags }}{{ $d = merge $d (dict "tags" .) }}{{ end -}}
+      {{- with .Params.facts }}{{ $d = merge $d (dict "facts" .) }}{{ end -}}
+      {{- with .Params.action }}{{ $d = merge $d (dict "action" .) }}{{ end -}}
+      {{- with .Params.logos -}}
+        {{- /* Logo groups; icons are inlined from assets/logos/<icon>.svg, no icon = text tile */ -}}
+        {{- $groups := slice -}}
+        {{- range . -}}
+          {{- $items := slice -}}
+          {{- range .items -}}
+            {{- $it := dict "name" .name -}}
+            {{- with .icon }}{{ with resources.Get (printf "logos/%s.svg" .) }}{{ $it = merge $it (dict "svg" .Content) }}{{ end }}{{ end -}}
+            {{- $items = $items | append $it -}}
+          {{- end -}}
+          {{- $groups = $groups | append (dict "group" .group "items" $items) -}}
+        {{- end -}}
+        {{- $d = merge $d (dict "logos" $groups) -}}
+      {{- end -}}
+      {{- $meta := .Params.meta -}}
+      {{- if eq $sec.Params.itemType "game" -}}
+        {{- $meta = .Params.year -}}
+        {{- $d = merge $d (dict "type" "game" "role" .Params.role "platforms" .Params.platforms "art" .Params.art) -}}
+        {{- with .Params.tag }}{{ $d = merge $d (dict "tag" .) }}{{ end -}}
+        {{- with .Resources.GetMatch "poster.*" -}}
+          {{- /* Any press-kit image works: cropped to 2:3 and converted to WebP at build time */ -}}
+          {{- $d = merge $d (dict "poster" (.Fill "480x720 center webp").RelPermalink) -}}
+        {{- end -}}
+      {{- else if eq $sec.Params.itemType "client" -}}
+        {{- $d = merge $d (dict "type" "client") -}}
+      {{- end -}}
+      {{- $row := dict "label" .Title "meta" $meta "d" $d -}}
+      {{- with .Params.href }}{{ $row = merge $row (dict "href" (replace . "{email}" $email)) }}{{ end -}}
+      {{- $rows = $rows | append $row -}}
+    {{- end -}}
+    {{- $tab := dict "id" .Section "label" .Title "blurb" .Params.blurb "intro" .Params.intro "rows" $rows -}}
+    {{- with .Params.display }}{{ $tab = merge $tab (dict "layout" .) }}{{ end -}}
+    {{- if eq .Params.display "team" -}}
+      {{- /* Team is a single designed page: all its content lives in team/_index.md */ -}}
+      {{- $logos := slice -}}
+      {{- range .Params.logos -}}
+        {{- $it := dict "name" .name -}}
+        {{- with .icon }}{{ with resources.Get (printf "logos/%s.svg" .) }}{{ $it = merge $it (dict "svg" .Content) }}{{ end }}{{ end -}}
+        {{- $logos = $logos | append $it -}}
+      {{- end -}}
+      {{- $tab = merge $tab (dict "team" (dict
+        "headline" .Params.headline "lede" .Params.lede "pillars" .Params.pillars
+        "erasTitle" .Params.eras_title "eras" .Params.eras "location" .Params.location
+        "story" (.Content | string) "logosTitle" .Params.logos_title "logos" $logos "cta" .Params.cta)) -}}
+    {{- end -}}
+    {{- $tabs = $tabs | append $tab -}}
+  {{- end }}
+  <script type="application/json" id="site-data">{{ dict "email" $email "testFiller" site.Params.testFiller "tabs" $tabs | jsonify | safeJS }}</script>
+
+  {{- /* Plain version of the same content for visitors without JavaScript and for crawlers */}}
+  <noscript>
+    <style>body{overflow:auto}#sky,.shade,.screen,.tools,.sweep,.dbg,.lab{display:none!important}.nojs{max-width:760px;margin:0 auto;padding:48px 20px}.nojs h2{margin:48px 0 8px}.nojs h3{margin:28px 0 6px;font-size:22px}.nojs a{color:var(--sun)}</style>
+    <main class="nojs">
+      <h1>{{ .Title }}</h1>
+      <p>{{ .Params.tagline }} · <a href="mailto:{{ $email }}">{{ $email }}</a></p>
+      {{- range .Sections.ByWeight }}
+      <section id="{{ .Section }}">
+        <h2>{{ .Title }}</h2>
+        {{ with .Params.intro }}<p>{{ . }}</p>{{ end }}
+        {{- if eq .Params.display "team" }}
+        <p>{{ delimit .Params.headline " " }}</p>
+        <p>{{ .Params.lede }}</p>
+        {{ range .Params.pillars }}<h3>{{ .title }}</h3><p>{{ .text }}</p>{{ end }}
+        <h3>{{ .Params.eras_title }}</h3>
+        <ul>{{ range .Params.eras }}<li>{{ .label }}: {{ .text }}</li>{{ end }}</ul>
+        {{ .Content }}
+        <p>{{ .Params.location.city }}, {{ .Params.location.country }}. {{ .Params.location.note }}</p>
+        <p>{{ .Params.logos_title }}: {{ range $i, $l := .Params.logos }}{{ if $i }}, {{ end }}{{ $l.name }}{{ end }}</p>
+        {{- end }}
+        {{- range .Pages.ByWeight }}
+        <article>
+          <h3>{{ .Title }}</h3>
+          {{ with .Params.platforms }}<p>{{ . }}</p>{{ end }}
+          {{ .Content }}
+          {{ with .Params.bullets }}<ul>{{ range . }}<li>{{ . }}</li>{{ end }}</ul>{{ end }}
+          {{ with .Params.facts }}<dl>{{ range . }}<dt>{{ .label }}</dt><dd>{{ .value }}</dd>{{ end }}</dl>{{ end }}
+          {{ with .Params.logos }}<ul>{{ range . }}<li>{{ .group }}: {{ range $i, $x := .items }}{{ if $i }}, {{ end }}{{ $x.name }}{{ end }}</li>{{ end }}</ul>{{ end }}
+        </article>
+        {{- end }}
+      </section>
+      {{- end }}
+    </main>
+  </noscript>
+
+  {{- $js := slice (resources.Get "js/scenes.js") (resources.Get "js/engine.js") (resources.Get "js/app.js") | resources.Concat "js/site.js" | minify | fingerprint }}
+  <script src="{{ $js.RelPermalink }}" integrity="{{ $js.Data.Integrity }}"></script>
+</body>
+</html>

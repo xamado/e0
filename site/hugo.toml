@@ -1,0 +1,19 @@
+baseURL = "https://eventzero.example/"  # TODO: real domain
+locale = "en"
+title = "Event Zero — AAA Engineering & Co-Development"
+
+# The whole site is one page (the main menu). Section and item pages exist only as
+# content for that page, so nothing else is rendered; see cascade in content/_index.md.
+disableKinds = ["taxonomy", "term", "rss"]
+
+[params]
+  description = "Event Zero is an engineering studio for AAA games: co-development, performance optimization, rendering, low-level systems and console hardware."
+  email = "hello@eventzero.example"  # TODO: real address
+  # TEST ONLY: extra placeholder posters on the Shipped screen to exercise scrolling. Set to 0 before launch.
+  testFiller = 16
+
+[imaging.webp]
+  quality = 82
+
+[markup.goldmark.renderer]
+  unsafe = false
