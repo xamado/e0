@@ -1,6 +1,6 @@
 ---
 title: "Star Citizen"
-weight: 1
+weight: 2
 year: "In development"
 platforms: "PC"
 tag: "In dev"
