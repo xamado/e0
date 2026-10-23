@@ -217,7 +217,7 @@
     {{- if eq .Params.display "terminal" -}}
       {{- $banner := slice -}}
       {{- range .Params.banner }}{{ $banner = $banner | append (replace . "{email}" $email) }}{{ end -}}
-      {{- $tab = merge $tab (dict "terminal" (dict "banner" $banner "tips" .Params.tips "endpoint" (site.Params.contactEndpoint | default "") "key" (site.Params.contactKey | default ""))) -}}
+      {{- $tab = merge $tab (dict "terminal" (dict "banner" $banner "readme" .Params.readme "tips" .Params.tips "endpoint" (site.Params.contactEndpoint | default "") "key" (site.Params.contactKey | default ""))) -}}
     {{- end -}}
     {{- if eq .Params.display "team" -}}
       {{- /* Team is a single designed page: all its content lives in team/_index.md */ -}}
@@ -279,7 +279,7 @@
     </main>
   </noscript>
 
-  {{- $js := slice (resources.Get "js/scenes.js") (resources.Get "js/engine.js") (resources.Get "js/app.js") | resources.Concat "js/site.js" | minify | fingerprint }}
+  {{- $js := slice (resources.Get "js/scenes.js") (resources.Get "js/engine.js") (resources.Get "js/raycaster.js") (resources.Get "js/app.js") | resources.Concat "js/site.js" | minify | fingerprint }}
   <script src="{{ $js.RelPermalink }}" integrity="{{ $js.Data.Integrity }}"></script>
 </body>
 </html>

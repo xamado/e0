@@ -245,6 +245,7 @@
         </div>
       </div>`;
     }
+    let activeGame = null;   // the hidden raycaster, while it runs (gets gamepad input)
     function mountTerminal(root, cfg) {
       const out = root.querySelector(".term__out"), input = root.querySelector(".term__in"), promptEl = root.querySelector(".term__prompt");
       const scroller = root.querySelector(".term__body");
@@ -259,7 +260,7 @@
       };
       const echo = (text) => print(promptEl.textContent + text, "echo");
       const STEPS = {
-        name: { prompt: "? name › " },
+        name: { prompt: "? your name › " },
         email: { prompt: "? email › " },
         company: { prompt: "? company (optional) › " },
         message: { prompt: "  " },
@@ -271,12 +272,12 @@
         if (fresh) out.textContent = "";
         msg = { name: "", email: "", company: "", message: "" }; lines = [];
         cfg.banner.forEach((b) => print(b, "dim"));
-        print("Type `help` for commands.", "dim");
+        print("Ctrl+C to cancel.", "dim");
         print("guest@event-0:~$ ./contact", "echo");
         go("name");
       };
       const help = () => {
-        print("commands: help · clear · restart · email · exit", "dim");
+        print("commands: help · clear · restart · email · exit · Ctrl+C to cancel", "dim");
         print("Answer each prompt and press Enter. Finish the message with an empty line.", "dim");
         if (cfg.tips?.length) print("Good things to include: " + cfg.tips.join("; ") + ".", "dim");
       };
@@ -311,7 +312,44 @@
         print("Type `restart` to write another message.", "dim");
         go("done"); input.focus();
       }
+      // Hidden easter egg: `./do-not-run` launches an ASCII raycaster inside the terminal
+      let game = null;
+      const body = root.querySelector(".term__body"), line = root.querySelector(".term__line");
+      function launchGame() {
+        if (!window.E0Raycaster) return print("permission denied", "err");
+        print("WARNING: this program was not meant to be run.", "err");
+        print("loading e0engine…", "dim");
+        setTimeout(() => {
+          out.hidden = true; line.style.position = "absolute"; line.style.opacity = "0"; line.style.pointerEvents = "none";
+          game = activeGame = E0Raycaster.start(body, {
+            sound: (k) => Sound.play(k),
+            onExit: (message) => {
+              game = activeGame = null;
+              out.hidden = false; line.style.position = ""; line.style.opacity = ""; line.style.pointerEvents = "";
+              print(message, "ok");
+              input.focus();
+              scroller.scrollTop = scroller.scrollHeight;
+            },
+          });
+          input.focus();
+        }, 700);
+      }
+      input.addEventListener("keyup", (e) => { if (game) game.key(e, false); });
       input.addEventListener("keydown", (e) => {
+        // Ctrl+C: interrupt like a shell (unless there's a text selection to copy)
+        if (e.ctrlKey && (e.key === "c" || e.key === "C") && input.selectionStart === input.selectionEnd && !window.getSelection().toString()) {
+          e.preventDefault(); e.stopPropagation();
+          if (game) return game.stop("^C");
+          if (busy) return;
+          if (step === "done") { print(promptEl.textContent + input.value + "^C", "echo"); input.value = ""; return; }
+          print(promptEl.textContent + input.value + "^C", "echo");
+          Sound.play("back");
+          lines = [];
+          print("run ./contact to start again", "dim");
+          go("done");
+          return;
+        }
+        if (game) { e.stopPropagation(); return game.key(e, true); }
         if (e.key === "Escape") { input.blur(); e.stopPropagation(); return; }
         if (e.key === "l" && e.ctrlKey) { e.preventDefault(); out.textContent = ""; return; }
         if (e.key !== "Enter" || busy) return;
@@ -320,13 +358,25 @@
         echo(raw);
         input.value = "";
         const cmd = v.toLowerCase();
-        // Commands work at any prompt except inside the message body
-        if (step !== "message" || lines.length === 0) {
+        // Commands only work at the shell prompt; inside ./contact everything typed is an answer
+        if (step === "done") {
+          if (!cmd) return;
           if (cmd === "help") { help(); input.value = ""; return; }
           if (cmd === "clear") { out.textContent = ""; input.value = ""; return; }
           if (cmd === "restart") { Sound.play("back"); start(true); return; }
           if (cmd === "email") { print(EMAIL); input.value = ""; return; }
           if (cmd === "exit") { back(); return; }
+          if (cmd === "ls" || cmd === "ls -la" || cmd === "ls -l") { print("contact*   README.md   do-not-run*", "dim"); return; }
+          // A tiny pretend filesystem: cat/less/more/head on the three files `ls` shows
+          const view = cmd.match(/^(cat|less|more|head)\s+(\S+)$/);
+          if (view) {
+            const file = view[2].replace(/^\.\//, "");
+            if (file === "readme.md") { (cfg.readme || []).forEach((l) => print(l || " ", l.startsWith("#") ? "q" : "")); return; }
+            if (file === "do-not-run" || file === "contact") { print(`${view[1]}: ${file}: binary file (e0engine v0.0.1, x86_64), refusing to print`, "err"); return; }
+            print(`${view[1]}: ${view[2]}: No such file or directory`, "err"); return;
+          }
+          if (cmd === "./do-not-run" || cmd === "do-not-run" || cmd === "sh do-not-run") { launchGame(); return; }
+          if (step === "done" && (cmd === "./contact" || cmd === "contact")) { Sound.play("select"); msg = { name: "", email: "", company: "", message: "" }; lines = []; go("name"); return; }
         }
         Sound.play("move");
         if (step === "name") {
@@ -364,7 +414,9 @@
     }
 
     function renderDetail(dir) {
-      const t = TABS[tabIdx], r = t.rows[rowIdx], d = r.d;
+      const t = TABS[tabIdx], r = t.rows[rowIdx];
+      if (!r) return;
+      const d = r.d;
       if (t.layout === "grid") {
         const info = pane.querySelector("#lvl-info");
         info.innerHTML = `<span class="k caps">Stage ${pad2(rowIdx + 1)} / ${pad2(t.rows.length)}</span><h3>${esc(r.label)}</h3><p class="m">${esc([d.role, d.platforms, r.meta].filter(Boolean).join(" · "))}</p>`;
@@ -509,9 +561,10 @@
     const move = (d) => {
       if (state === "menu") { selectMenu(menuIdx + d); menuBtns[menuIdx].focus({ preventScroll: true }); }
       else if (state === "sub") {
-        if (TABS[tabIdx].layout === "page") {
+        // Single-page screens (Team, Contact…) have no list: up/down scroll them instead
+        if (["page", "team", "terminal"].includes(TABS[tabIdx].layout) || !TABS[tabIdx].rows.length) {
           // Accumulate presses so holding the key keeps scrolling smoothly
-          const el = narrow.matches ? document.querySelector(".sub") : pane.querySelector(".pg__body, .tm");
+          const el = narrow.matches ? document.querySelector(".sub") : pane.querySelector(".pg__body, .tm, .term__body");
           if (!el) return;
           const max = el.scrollHeight - el.clientHeight;
           const from = Math.abs((el._scrollGoal ?? el.scrollTop) - el.scrollTop) < 4 ? el.scrollTop : el._scrollGoal;
@@ -525,9 +578,9 @@
         selectRow(next);
       }
     };
-    // Left/right: move across the grid on level select, switch tabs elsewhere
+    // Left/right only move across the poster grid; tabs switch with Q/E (LB/RB) as the top bar shows
     const side = (d) => {
-      if (!isGrid()) return tab(d);
+      if (!isGrid()) return;
       const cols = gridCols(), col = rowIdx % cols, next = rowIdx + d;
       if (col + d < 0 || col + d >= cols || next >= TABS[tabIdx].rows.length) return Sound.play("bump");
       selectRow(next);
@@ -591,6 +644,7 @@
       const pads = navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean) : [];
       const p = pads[0];
       if (!p) return;
+      if (activeGame) { activeGame.pad(p); p.buttons.forEach((b, i) => (prev[i] = b.pressed)); return; }
       const pressed = (i) => p.buttons[i]?.pressed;
       const edge = (i) => { const v = pressed(i), was = prev[i]; prev[i] = v; return v && !was; };
       const any = p.buttons.some((b) => b.pressed);
@@ -653,7 +707,7 @@
       });
       impulse = 0;
       updatePerf(now);
-      pollPad(now);
+      try { pollPad(now); } catch (err) { console.error(err); }
       requestAnimationFrame(frame);
     });
 
