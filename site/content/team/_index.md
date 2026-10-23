@@ -37,28 +37,34 @@ location:
   note: "Home base. The rest of the crew is spread across the globe, with hours that overlap the Americas and Europe."
 
 logos_title: "Tools of the trade"
-# icon: file in assets/logos/ (cleaned single-colour SVGs, cropped to the artwork; shown at a fixed height)
+# One row per group (no labels shown). icon: file in assets/logos/ (single-colour SVG, cropped to the artwork).
 logos:
-  - { name: "Unreal Engine", icon: "unrealengine" }
-  - { name: "Unity", icon: "unity" }
-  - { name: "CryEngine", icon: "cryengine" }
-  - { name: "Frostbite", icon: "frostbite" }
-  - { name: "Snowdrop", icon: "snowdrop" }
-  - { name: "Ubisoft Anvil", icon: "anvil" }
-  - { name: "Godot", icon: "godotengine" }
-  - { name: "DirectX", icon: "directx" }
-  - { name: "Vulkan", icon: "vulkan" }
-  - { name: "OpenGL", icon: "opengl" }
-  - { name: "PlayStation", icon: "playstation" }
-  - { name: "Xbox", icon: "xbox" }
-  - { name: "Nintendo Switch", icon: "nintendoswitch" }
-  - { name: "Steam", icon: "steam" }
-  - { name: "Meta Quest", icon: "meta" }
-  - { name: "iOS", icon: "apple" }
-  - { name: "Android", icon: "android" }
-  - { name: "Perforce", icon: "perforce" }
-  - { name: "Git", icon: "git" }
-  - { name: "CMake", icon: "cmake" }
+  - group: "Engines & graphics"
+    items:
+      - { name: "Unreal Engine", icon: "unrealengine" }
+      - { name: "Unity", icon: "unity" }
+      - { name: "CryEngine", icon: "cryengine" }
+      - { name: "Frostbite", icon: "frostbite" }
+      - { name: "Snowdrop", icon: "snowdrop" }
+      - { name: "Ubisoft Anvil", icon: "anvil" }
+      - { name: "Godot", icon: "godotengine" }
+      - { name: "DirectX", icon: "directx" }
+      - { name: "Vulkan", icon: "vulkan" }
+      - { name: "OpenGL", icon: "opengl" }
+  - group: "Platforms"
+    items:
+      - { name: "PlayStation", icon: "playstation" }
+      - { name: "Xbox", icon: "xbox" }
+      - { name: "Nintendo Switch", icon: "nintendoswitch" }
+      - { name: "Steam", icon: "steam" }
+      - { name: "Meta Quest", icon: "meta" }
+      - { name: "iOS", icon: "apple" }
+      - { name: "Android", icon: "android" }
+  - group: "Tools"
+    items:
+      - { name: "Perforce", icon: "perforce" }
+      - { name: "Git", icon: "git" }
+      - { name: "CMake", icon: "cmake" }
 
 cta:
   title: "Want us on your team?"

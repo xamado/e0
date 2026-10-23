@@ -217,7 +217,7 @@
 
         <section class="tm__logos">
           <h3 class="tm__label caps">${esc(m.logosTitle || "")}</h3>
-          <ul>${(m.logos || []).map((l) => `<li title="${esc(l.name)}">${l.svg || `<span>${esc(l.name)}</span>`}</li>`).join("")}</ul>
+          ${(m.logos || []).map((g) => `<ul aria-label="${esc(g.group)}">${g.items.map((l) => `<li title="${esc(l.name)}">${l.svg || `<span>${esc(l.name)}</span>`}</li>`).join("")}</ul>`).join("")}
         </section>
 
         ${m.cta ? `<footer class="tm__cta"><h3>${esc(m.cta.title)}</h3><button type="button" class="tm__btn" data-goto="contact">${esc(m.cta.button)} <span aria-hidden="true">▶</span></button></footer>` : ""}
@@ -442,8 +442,16 @@
                 <span class="stage caps"><span>Stage ${pad2(k + 1)}</span><span>${esc(r.d.tag || r.meta)}</span></span>
                 <span><span class="t">${esc(r.label)}</span><span class="m caps">${esc(r.d.platforms)}</span></span></button>`).join("")}</div>
             <p class="note">Credits include work at previous studios. All trademarks belong to their respective owners.</p></div>`
-        : `${head}<div class="rows" role="listbox" aria-label="${esc(t.label)}">${t.rows.map((r, k) =>
-          `<button class="row${k === 0 ? " is-active" : ""}" type="button" role="option" data-i="${k}"><span class="n">0${k + 1}</span><span class="label">${esc(r.label)}</span><span class="meta">${esc(r.meta)}</span></button>`).join("")}</div>`;
+        : `${head}<div class="rows" role="listbox" aria-label="${esc(t.label)}">${(() => {
+            // Optional group labels (e.g. "What we do" / "How we engage"); numbering restarts per group
+            let html = "", n = 0, last;
+            t.rows.forEach((r, k) => {
+              if (r.group !== last) { last = r.group; n = 0; if (r.group) html += `<p class="rows__group caps" role="presentation">${esc(r.group)}</p>`; }
+              n++;
+              html += `<button class="row${k === 0 ? " is-active" : ""}" type="button" role="option" data-i="${k}"><span class="n">${pad2(n)}</span><span class="label">${esc(r.label)}</span><span class="meta">${esc(r.meta)}</span></button>`;
+            });
+            return html;
+          })()}</div>`;
       // Real poster art: use assets/posters/<slug>.jpg when it exists, otherwise keep the placeholder
       pane.querySelectorAll(".cell[data-poster]").forEach((c) => {
         const img = new Image();
@@ -548,10 +556,12 @@
       if (e.target.matches && e.target.matches("input, select, textarea")) { if (e.key === "Escape") toggleLab(false); return; }
       if (e.key === "p" || e.key === "P") { e.preventDefault(); return toggleLab(); }
       if (e.key === "m" || e.key === "M") { e.preventDefault(); return setSound(!Sound.on); }
+      if (e.key === "c" || e.key === "C") { e.preventDefault(); return togglePal(); }
       if (e.key === "v" || e.key === "V") { e.preventDefault(); return setView((lab.debug + 1) % 5); }
       const t = e.target;
       if (t.matches && t.matches("input, select, textarea")) { if (e.key === "Escape") toggleLab(false); return; }
       if (t.closest && t.closest(".lab, .tools") && (e.key === "Enter" || e.key === " ")) return;
+      if (e.key === "Escape" && palPop.classList.contains("is-open")) { e.preventDefault(); return togglePal(false); }
       if (e.key === "Escape" && labEl.classList.contains("is-open")) { e.preventDefault(); return toggleLab(false); }
       setInput("kb");
       if (state === "splash") { e.preventDefault(); return setState("menu"); }
@@ -686,6 +696,25 @@
       if (lab.clock) lab.clock = false;
       save(); Sound.play("move"); applyScene();
     });
+    // ── Public palette picker (top-right swatches); mirrors the lab's palette chips ──
+    const palBtn = $("#pal-btn"), palPop = $("#palpop");
+    palPop.innerHTML = Object.entries(PRESETS).map(([id, P]) =>
+      `<button type="button" role="radio" data-id="${id}" title="${P.name}" aria-label="${P.name}" style="--a:${css(P.hor)};--b:${css(P.mid)};--c:${P.accent}"></button>`).join("");
+    const togglePal = (force) => {
+      const open = force ?? !palPop.classList.contains("is-open");
+      palPop.classList.toggle("is-open", open);
+      palBtn.setAttribute("aria-expanded", open);
+    };
+    palBtn.addEventListener("click", (e) => { e.stopPropagation(); togglePal(); });
+    palPop.addEventListener("click", (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      e.stopPropagation();
+      if (lab.per) lab.map[screenKey()].preset = b.dataset.id; else lab.preset = b.dataset.id;
+      if (lab.clock) lab.clock = false;
+      save(); Sound.play("move"); applyScene();
+    });
+    addEventListener("click", (e) => { if (!e.target.closest(".palpick")) togglePal(false); });
+
     typesEl.innerHTML = TYPES.map((t) => `<button class="chip" type="button" data-t="${t}">${esc(typeLabel(t))}</button>`).join("");
     typesEl.addEventListener("click", (e) => {
       const b = e.target.closest(".chip"); if (!b) return;
@@ -772,6 +801,7 @@
       $("#lab-where").textContent = lab.per ? SCREENS.find(([k]) => k === screenKey())[1] : "All screens";
       $("#lab-editing").textContent = P.name;
       presetsEl.querySelectorAll(".chip").forEach((c) => c.classList.toggle("is-on", c.dataset.id === id));
+      palPop.querySelectorAll("button").forEach((c) => { c.classList.toggle("is-on", c.dataset.id === id); c.setAttribute("aria-checked", c.dataset.id === id); });
       typesEl.querySelectorAll(".chip").forEach((c) => c.classList.toggle("is-on", c.dataset.t === activeType()));
       $("#lab-per").checked = lab.per;
       mapEl.hidden = !lab.per;

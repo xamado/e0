@@ -142,6 +142,11 @@
     .row .label { font: 600 22px/1.1 var(--cond); letter-spacing: .08em; text-transform: uppercase; }
     .row .meta { font: 500 13px/1 var(--cond); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
     .row.is-active { color: var(--text); padding-left: 22px; }
+    .rows__group { color: var(--dim); padding: 4px 16px 6px; }
+    .rows__group:not(:first-child) { margin-top: 18px; }
+    /* Grouped lists (Services) are long: slightly tighter rows so everything fits */
+    .rows:has(.rows__group) .row { padding-top: 10px; padding-bottom: 10px; }
+    .rows:has(.rows__group) .rows__group:not(:first-child) { margin-top: 12px; }
     .row.is-active .n, .row.is-active .meta { color: var(--sun); }
     .row.is-active::after { transform: scaleX(1); }
 
@@ -253,7 +258,8 @@
     .tm__tzlabels span:nth-child(2) { color: var(--sun); }
     .tm__note { margin-top: 22px; color: var(--muted); font-size: 15.5px; line-height: 1.6; max-width: 46ch; }
 
-    .tm__logos ul { display: flex; flex-wrap: wrap; align-items: center; gap: 36px 52px; }
+    .tm__logos ul { display: flex; flex-wrap: wrap; align-items: center; gap: 30px 52px; }
+    .tm__logos ul + ul { margin-top: 40px; }  /* one row per group */
     .tm__logos li { color: rgba(255,244,234,.55); transition: color .25s, transform .25s var(--ease); line-height: 0; }
     .tm__logos li:hover { color: var(--sun); transform: translateY(-2px); }
     /* Logos are cropped to their artwork, so a fixed height keeps wordmarks and icons balanced */
@@ -388,6 +394,17 @@
     .tool:hover { transform: translateY(-1px); }
     .tool:focus-visible { outline: 1px solid var(--sun); outline-offset: 2px; }
     .tool svg { width: 22px; height: 22px; flex: none; }
+    /* Palette picker: a row of swatches that drops down under the colours icon */
+    .palpick { position: relative; display: inline-flex; }
+    .palpop { position: absolute; top: calc(100% + 8px); right: -6px; display: flex; gap: 8px; padding: 10px 12px; border-radius: 999px;
+      background: rgba(14,7,28,.72); backdrop-filter: blur(14px); box-shadow: 0 12px 30px -12px rgba(0,0,0,.7);
+      opacity: 0; transform: translateY(-6px); pointer-events: none; transition: opacity .2s, transform .25s var(--ease); }
+    .palpop.is-open { opacity: 1; transform: none; pointer-events: auto; }
+    .palpop button { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, var(--a) 0 45%, var(--b) 55%);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); transition: transform .15s var(--ease), box-shadow .2s; }
+    .palpop button:hover { transform: scale(1.15); }
+    .palpop button.is-on { box-shadow: 0 0 0 2px #120a24, 0 0 0 3.5px var(--c); }
+    .palpop button:focus-visible { outline: 1px solid var(--sun); outline-offset: 3px; }
     .tool span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
     .tool .off { display: none; }
     .tool[aria-pressed="false"] .on { display: none; }

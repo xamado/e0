@@ -1,6 +1,7 @@
 ---
+group: "How we engage"
 title: "Deliver"
-weight: 3
+weight: 7
 meta: "Project"
 kicker: "Mode 03"
 facts:

@@ -1,6 +1,6 @@
 ---
 title: "Contact"
-weight: 5
+weight: 4
 display: "terminal"
 blurb: "Tell us about your game."
 intro: "Tell us about your game: the engine, the platforms and where it hurts. We usually reply within a working day."

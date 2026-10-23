@@ -87,6 +87,13 @@
       <svg class="off" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 6h3l4-3v10l-4-3H2z"/><path d="M11 6l4 4M15 6l-4 4"/></svg>
       <span>Sound</span>
     </button>
+    <span class="palpick">
+      <button class="tool" id="pal-btn" type="button" aria-expanded="false" aria-controls="palpop" title="Colours (C)" aria-label="Colours">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M8 1.75a6.25 6.25 0 1 0 0 12.5c.9 0 1.4-.6 1.4-1.3 0-.8-.6-1.1-.6-1.9 0-.8.6-1.4 1.5-1.4h1.6c1.6 0 2.85-1.2 2.85-2.9C14.75 4.2 11.75 1.75 8 1.75Z"/><circle cx="4.9" cy="7.2" r=".9" fill="currentColor" stroke="none"/><circle cx="6.9" cy="4.5" r=".9" fill="currentColor" stroke="none"/><circle cx="10.2" cy="4.7" r=".9" fill="currentColor" stroke="none"/></svg>
+        <span>Colours</span>
+      </button>
+      <span class="palpop" id="palpop" role="radiogroup" aria-label="Colour palette"></span>
+    </span>
     <button class="tool" id="lab-btn" type="button" aria-expanded="false" aria-controls="lab" title="Scene lab (P)" aria-label="Scene lab">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 4h1.2M6.8 4H14M2 8h6.2M11.8 8H14M2 12h3.2M8.8 12H14"/><circle cx="5" cy="4" r="1.6"/><circle cx="10" cy="8" r="1.6"/><circle cx="7" cy="12" r="1.6"/></svg>
       <span>Scene</span>
@@ -202,6 +209,7 @@
       {{- end -}}
       {{- $row := dict "label" .Title "meta" $meta "d" $d -}}
       {{- with .Params.href }}{{ $row = merge $row (dict "href" (replace . "{email}" $email)) }}{{ end -}}
+      {{- with .Params.group }}{{ $row = merge $row (dict "group" .) }}{{ end -}}
       {{- $rows = $rows | append $row -}}
     {{- end -}}
     {{- $tab := dict "id" .Section "label" .Title "blurb" .Params.blurb "intro" .Params.intro "rows" $rows -}}
@@ -215,9 +223,13 @@
       {{- /* Team is a single designed page: all its content lives in team/_index.md */ -}}
       {{- $logos := slice -}}
       {{- range .Params.logos -}}
-        {{- $it := dict "name" .name -}}
-        {{- with .icon }}{{ with resources.Get (printf "logos/%s.svg" .) }}{{ $it = merge $it (dict "svg" .Content) }}{{ end }}{{ end -}}
-        {{- $logos = $logos | append $it -}}
+        {{- $items := slice -}}
+        {{- range .items -}}
+          {{- $it := dict "name" .name -}}
+          {{- with .icon }}{{ with resources.Get (printf "logos/%s.svg" .) }}{{ $it = merge $it (dict "svg" .Content) }}{{ end }}{{ end -}}
+          {{- $items = $items | append $it -}}
+        {{- end -}}
+        {{- $logos = $logos | append (dict "group" .group "items" $items) -}}
       {{- end -}}
       {{- $tab = merge $tab (dict "team" (dict
         "headline" .Params.headline "lede" .Params.lede "pillars" .Params.pillars
@@ -249,9 +261,10 @@
         <ul>{{ range .Params.eras }}<li>{{ .label }}: {{ .text }}</li>{{ end }}</ul>
         {{ .Content }}
         <p>{{ .Params.location.city }}, {{ .Params.location.country }}. {{ .Params.location.note }}</p>
-        <p>{{ .Params.logos_title }}: {{ range $i, $l := .Params.logos }}{{ if $i }}, {{ end }}{{ $l.name }}{{ end }}</p>
+        {{ range .Params.logos }}<p>{{ .group }}: {{ range $i, $l := .items }}{{ if $i }}, {{ end }}{{ $l.name }}{{ end }}</p>{{ end }}
         {{- end }}
         {{- range .Pages.ByWeight }}
+        {{ with .Params.group }}<h3>{{ . }}</h3>{{ end }}
         <article>
           <h3>{{ .Title }}</h3>
           {{ with .Params.platforms }}<p>{{ . }}</p>{{ end }}
