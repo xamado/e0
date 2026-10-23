@@ -44,12 +44,12 @@
     </div>
     <footer class="bar caps stag" style="--i:9">
       <div class="hints">
-        <span class="hint"><span class="glyph"><span data-kb>↑↓</span><span data-pad>✥</span></span>Navigate</span>
-        <span class="hint"><span class="glyph glyph--a"><span data-kb>Enter</span><span data-pad>A</span></span>Select</span>
-      </div>
-      <div class="hints">
         <a class="hint" href="mailto:{{ site.Params.email }}">{{ site.Params.email }}</a>
         <span class="hint">© <span class="year">{{ now.Year }}</span> Event Zero</span>
+      </div>
+      <div class="hints hints--keys">
+        <span class="hint"><span class="glyph"><span data-kb>↑↓</span><span data-pad>✥</span></span>Navigate</span>
+        <span class="hint"><span class="glyph glyph--a"><span data-kb>Enter</span><span data-pad>A</span></span>Select</span>
       </div>
     </footer>
   </section>
@@ -85,13 +85,13 @@
 
   <!-- Tools: sound toggle + scene lab (for trying variations) -->
   <div class="tools">
-    <button class="tool" id="snd-btn" type="button" aria-pressed="true" title="Sound (M)">
+    <button class="tool" id="snd-btn" type="button" aria-pressed="true" title="Sound (M)" aria-label="Sound">
       <svg class="on" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 6h3l4-3v10l-4-3H2z"/><path d="M11.5 5.5a3.5 3.5 0 0 1 0 5M13.5 3.5a6.5 6.5 0 0 1 0 9"/></svg>
       <svg class="off" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 6h3l4-3v10l-4-3H2z"/><path d="M11 6l4 4M15 6l-4 4"/></svg>
       <span>Sound</span>
     </button>
-    <button class="tool" id="lab-btn" type="button" aria-expanded="false" aria-controls="lab" title="Scene lab (P)">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/><circle cx="5" cy="4" r="1.6" fill="#120a24"/><circle cx="10" cy="8" r="1.6" fill="#120a24"/><circle cx="7" cy="12" r="1.6" fill="#120a24"/></svg>
+    <button class="tool" id="lab-btn" type="button" aria-expanded="false" aria-controls="lab" title="Scene lab (P)" aria-label="Scene lab">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 4h1.2M6.8 4H14M2 8h6.2M11.8 8H14M2 12h3.2M8.8 12H14"/><circle cx="5" cy="4" r="1.6"/><circle cx="10" cy="8" r="1.6"/><circle cx="7" cy="12" r="1.6"/></svg>
       <span>Scene</span>
     </button>
   </div>
@@ -194,7 +194,7 @@
       {{- $meta := .Params.meta -}}
       {{- if eq $sec.Params.itemType "game" -}}
         {{- $meta = .Params.year -}}
-        {{- $d = merge $d (dict "type" "game" "role" .Params.role "platforms" .Params.platforms "art" .Params.art) -}}
+        {{- $d = merge $d (dict "type" "game" "role" (.Params.role | default "") "platforms" .Params.platforms "art" .Params.art) -}}
         {{- with .Params.tag }}{{ $d = merge $d (dict "tag" .) }}{{ end -}}
         {{- with .Resources.GetMatch "poster.*" -}}
           {{- /* Any press-kit image works: cropped to 2:3 and converted to WebP at build time */ -}}
@@ -224,7 +224,7 @@
     {{- end -}}
     {{- $tabs = $tabs | append $tab -}}
   {{- end }}
-  <script type="application/json" id="site-data">{{ dict "email" $email "testFiller" site.Params.testFiller "tabs" $tabs | jsonify | safeJS }}</script>
+  <script type="application/json" id="site-data">{{ dict "email" $email "tabs" $tabs | jsonify | safeJS }}</script>
 
   {{- /* Plain version of the same content for visitors without JavaScript and for crawlers */}}
   <noscript>

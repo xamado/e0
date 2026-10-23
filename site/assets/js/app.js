@@ -4,18 +4,6 @@
     const DATA = JSON.parse(document.getElementById("site-data").textContent);
     const EMAIL = DATA.email;
     const TABS = DATA.tabs;
-    // TEST ONLY: filler cards to exercise scrolling. Set params.testFiller = 0 in hugo.toml before launch.
-    function fillerGames(n) {
-      const hues = [[255, 122, 89], [94, 231, 223], [217, 72, 95], [31, 122, 108], [122, 42, 158], [184, 86, 47], [42, 63, 143], [255, 201, 120]];
-      return Array.from({ length: n }, (_, i) => {
-        const [r, g, b] = hues[i % hues.length];
-        return { label: `Test Title ${String(i + 9).padStart(2, "0")}`, meta: String(2010 + (i % 15)), d: { type: "game",
-          art: `radial-gradient(circle at ${30 + (i * 17) % 50}% 30%, rgba(255,255,255,.45), transparent 45%), linear-gradient(${150 + i * 9}deg, rgb(${r},${g},${b}), #120a24)`,
-          role: "Test data", platforms: ["PS5 · Xbox Series · PC", "Switch", "PC", "Multiplatform", "Meta Quest"][i % 5] } };
-      });
-    }
-    const gridTab = TABS.find((t) => t.layout === "grid");
-    if (gridTab && DATA.testFiller > 0) gridTab.rows.push(...fillerGames(DATA.testFiller));
 
     // ── Elements ─────────────────────────────────────────
     const $ = (s) => document.querySelector(s);
@@ -28,7 +16,7 @@
     const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
     menuEl.innerHTML = TABS.map((t, i) =>
-      `<li class="stag" style="--i:${i + 3}"><button type="button" data-i="${i}"><span class="n">0${i + 1}</span><span>${esc(t.label)}<small>${esc(t.blurb)}</small></span></button></li>`).join("");
+      `<li class="stag" style="--i:${i + 3}"><button type="button" data-i="${i}"><span class="n">0${i + 1}</span><span>${esc(t.label)}</span></button></li>`).join("");
     tabsEl.innerHTML = TABS.map((t, i) => `<button class="tab" role="tab" type="button" data-i="${i}">${esc(t.label)}</button>`).join("");
     const menuBtns = [...menuEl.querySelectorAll("button")];
     const tabBtns = [...tabsEl.querySelectorAll(".tab")];
@@ -247,16 +235,16 @@
       const t = TABS[tabIdx], r = t.rows[rowIdx], d = r.d;
       if (t.layout === "grid") {
         const info = pane.querySelector("#lvl-info");
-        info.innerHTML = `<span class="k caps">Stage ${pad2(rowIdx + 1)} / ${pad2(t.rows.length)}</span><h3>${esc(r.label)}</h3><p class="m">${esc(d.role)} · ${esc(d.platforms)} · ${esc(r.meta)}</p>`;
+        info.innerHTML = `<span class="k caps">Stage ${pad2(rowIdx + 1)} / ${pad2(t.rows.length)}</span><h3>${esc(r.label)}</h3><p class="m">${esc([d.role, d.platforms, r.meta].filter(Boolean).join(" · "))}</p>`;
         anim(info, dir || "swap-f");
-        desc.textContent = `${r.label} · ${d.role} · ${d.platforms}`;
+        desc.textContent = [r.label, d.role, d.platforms].filter(Boolean).join(" · ");
         return;
       }
       let html = "";
       if (d.type === "game") {
         html = `<div class="art" style="--art:${d.art}"></div>
           <span class="detail__k caps">${esc(r.meta)}</span><h3>${esc(r.label)}</h3>
-          <dl class="facts"><dt>Our role</dt><dd>${esc(d.role)}</dd><dt>Platforms</dt><dd>${esc(d.platforms)}</dd><dt>Released</dt><dd>${esc(r.meta)}</dd></dl>
+          <dl class="facts">${d.role ? `<dt>Our role</dt><dd>${esc(d.role)}</dd>` : ""}<dt>Platforms</dt><dd>${esc(d.platforms)}</dd><dt>Released</dt><dd>${esc(r.meta)}</dd></dl>
           <p class="note">Credits include work at previous studios. All trademarks belong to their respective owners.</p>`;
       } else if (d.type === "client") {
         html = `<div class="logo-slot">Logo</div><span class="detail__k caps">Client</span><h3>${esc(r.label)}</h3>${d.bodyHtml || `<p>${esc(d.body)}</p>`}`;

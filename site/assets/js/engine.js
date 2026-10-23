@@ -69,7 +69,7 @@ void main(){ vec2 p = vec2(gl_VertexID == 1 ? 3. : -1., gl_VertexID == 2 ? 3. : 
     };
     // Per-attractor framing: centre, scale, swap y/z so the "up" axis is vertical, speed→colour
     const ATTR = [
-      { center: [0, 0, 25], scale: .042, swap: 1, speedK: .012 },
+      { center: [0, 0, 25], scale: .042, swap: 1, speedK: .012, yaw: .5 },  // yaw: face-on view of the wings
       { center: [0, 0, .6], scale: .5, swap: 1, speedK: .5 },
       { center: [0, 0, 0], scale: .2, swap: 0, speedK: 1.2 },
       { center: [-1.6, -1.6, -1.6], scale: .075, swap: 0, speedK: .06 },
@@ -116,14 +116,18 @@ void main(){ vec2 p = vec2(gl_VertexID == 1 ? 3. : -1., gl_VertexID == 2 ? 3. : 
       gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT);
       return true;
     }
-    // Camera: fixed at each style's viewing angle (no automatic or mouse rotation).
-    // Only eases when switching styles so the angle change isn't a jump.
+    // Camera: a slow automatic sway around each style's best angle, never more than
+    // ±25° (side views of the attractors look bad). No mouse rotation. Pitch eases when
+    // switching styles so the angle change isn't a jump.
+    const SWAY_MAX = 25 * Math.PI / 180;
     const cam = { pitch: null };
-    function cameraAngles(st, o) {
+    function cameraAngles(st, o, baseYaw = 0) {
       const target = st.pitch || 0;
       const k = o.reduce || cam.pitch === null ? 1 : 1 - Math.exp(-Math.min(o.dt, .05) * 3);
       cam.pitch = cam.pitch === null ? target : cam.pitch + (target - cam.pitch) * k;
-      return [0, cam.pitch];
+      const amp = Math.min(st.sway ?? SWAY_MAX, SWAY_MAX);
+      const yaw = o.reduce ? 0 : amp * Math.sin(o.t * (st.swaySpeed || .12));
+      return [baseYaw + yaw, cam.pitch];
     }
     function rotMat(yaw, pitch) {
       const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
@@ -196,7 +200,7 @@ void main(){ vec2 p = vec2(gl_VertexID == 1 ? 3. : -1., gl_VertexID == 2 ? 3. : 
       gl.uniform1i(ptsProg.u("uDebug"), o.debug);
       gl.uniform1i(ptsProg.u("uSwap"), isAttr ? at.swap : 0);
       gl.uniform1i(ptsProg.u("uFadeW"), st.fadeW || 0);
-      gl.uniformMatrix3fv(ptsProg.u("uRot"), false, rotMat(...cameraAngles(st, o)));
+      gl.uniformMatrix3fv(ptsProg.u("uRot"), false, rotMat(...cameraAngles(st, o, isAttr ? at.yaw || 0 : 0)));
       gl.uniform3fv(ptsProg.u("uCenter"), isAttr ? at.center : [0, 0, 0]);
       gl.uniform1f(ptsProg.u("uScale"), isAttr ? at.scale : 1);
       gl.uniform1f(ptsProg.u("uCamDist"), st.camDist || 0);

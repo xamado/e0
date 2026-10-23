@@ -15,10 +15,9 @@ Each menu entry is a folder in `content/`, ordered by `weight` in its `_index.md
 - `services/`, `clients/`, `engage/` (How we work), `contact/`: one `.md` file per item in the list.
   The body text is the description; front matter holds `meta`, `kicker`, `bullets`, `tags`, `facts`.
 - `shipped/`: one folder per game with `index.md` (`year`, `platforms`, `role`, optional `tag`)
-  and `poster.jpg`. Any poster image works: Hugo crops it to 2:3 and converts it to WebP at build time.
+  and `poster.jpg`; add `role: "…"` to show your role on that game. Games are ordered by `weight`. Any poster image works: Hugo crops it to 2:3 and converts it to WebP at build time.
 - `content/_index.md`: tagline and the title-screen prompt.
-- `hugo.toml`: site title, description, contact `email` (used wherever `{email}` appears),
-  and `testFiller` (extra placeholder posters for testing; set to `0` before launch).
+- `hugo.toml`: site title, description and contact `email` (used wherever `{email}` appears).
 
 ## Code
 

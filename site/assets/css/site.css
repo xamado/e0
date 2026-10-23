@@ -54,7 +54,8 @@
     .splash { display: grid; place-items: center; text-align: center; transition: opacity .5s var(--ease), transform .6s var(--ease); }
     .splash__inner { display: grid; justify-items: center; gap: 16px; }
     .splash .logo { font: 700 clamp(52px, 8vw, 120px)/.9 var(--cond); letter-spacing: .12em; text-transform: uppercase; margin-left: .12em; text-shadow: 0 2px 50px rgba(255,140,90,.4); }
-    .press { margin-top: clamp(40px, 10vh, 90px); color: var(--text); animation: breathe 2.2s ease-in-out infinite; }
+    .splash .press { margin-top: clamp(48px, 11vh, 110px); color: var(--text); font: 600 clamp(22px, 2.6vw, 38px)/1 var(--cond); letter-spacing: .32em; margin-right: -.32em;
+      text-shadow: 0 0 30px color-mix(in srgb, var(--sun) 45%, transparent); animation: breathe 2.2s ease-in-out infinite; }
     @keyframes breathe { 50% { opacity: .35; } }
     .splash__foot { position: absolute; bottom: 26px; left: 0; right: 0; color: var(--dim); }
     body:not(.is-splash) .splash { opacity: 0; transform: scale(1.04); pointer-events: none; }
@@ -247,10 +248,13 @@
     .tm__tzlabels span:nth-child(2) { color: var(--sun); }
     .tm__note { margin-top: 22px; color: var(--muted); font-size: 15.5px; line-height: 1.6; max-width: 46ch; }
 
-    .tm__logos ul { display: flex; flex-wrap: wrap; align-items: center; gap: 34px 48px; }
+    .tm__logos ul { display: flex; flex-wrap: wrap; align-items: center; gap: 36px 52px; }
     .tm__logos li { color: rgba(255,244,234,.55); transition: color .25s, transform .25s var(--ease); line-height: 0; }
     .tm__logos li:hover { color: var(--sun); transform: translateY(-2px); }
-    .tm__logos svg { width: 42px; height: 42px; fill: currentColor; }
+    /* Logos are cropped to their artwork, so a fixed height keeps wordmarks and icons balanced */
+    .tm__logos svg { height: 40px; width: auto; max-width: 190px; display: block; fill: currentColor; }
+    .tm__logos li[title="Snowdrop"] svg { height: 56px; max-width: 220px; }  /* tall mark with a small wordmark */
+    .tm__logos li[title="CryEngine"] svg { height: 30px; }  /* the eye is wide; keep it in proportion */
     .tm__logos span { font: 700 22px/42px var(--cond); letter-spacing: .08em; text-transform: uppercase; display: inline-block; }
 
     .tm__cta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px; padding: 40px 0 10px; border-top: 1px solid var(--line); }
@@ -333,10 +337,14 @@
     @keyframes sweep { to { transform: translateX(100%); } }
 
     /* ── Tools + scene lab ───────────────────── */
-    .tools { position: fixed; top: 18px; right: var(--gutter); z-index: 8; display: flex; gap: 8px; }
-    .tool { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border: 1px solid var(--line); background: rgba(14,7,28,.45); backdrop-filter: blur(10px); font: 600 12px/1 var(--cond); letter-spacing: .2em; text-transform: uppercase; color: var(--muted); transition: color .2s, border-color .2s; }
-    .tool:hover, .tool[aria-expanded="true"] { color: var(--text); border-color: var(--sun); }
-    .tool svg { width: 16px; height: 16px; flex: none; }
+    .tools { position: fixed; top: 18px; right: var(--gutter); z-index: 8; display: flex; gap: 4px; }
+    /* Icon-only buttons; the text label stays for screen readers */
+    .tool { display: inline-grid; place-items: center; width: 40px; height: 40px; color: var(--muted); transition: color .2s, transform .2s var(--ease); filter: drop-shadow(0 1px 6px rgba(0,0,0,.5)); }
+    .tool:hover, .tool[aria-expanded="true"] { color: var(--sun); }
+    .tool:hover { transform: translateY(-1px); }
+    .tool:focus-visible { outline: 1px solid var(--sun); outline-offset: 2px; }
+    .tool svg { width: 22px; height: 22px; flex: none; }
+    .tool span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
     .tool .off { display: none; }
     .tool[aria-pressed="false"] .on { display: none; }
     .tool[aria-pressed="false"] .off { display: block; }
@@ -391,7 +399,6 @@
       .sub__top { grid-template-columns: 1fr; gap: 12px; padding-top: 14px; padding-bottom: 0; position: sticky; top: 0; z-index: 2; background: rgba(14,7,28,.85); backdrop-filter: blur(12px); }
       .sub__meta, .bumper { display: none; }
       .tools { top: 12px; }
-      .tool span { display: none; }
       .lab { top: 58px; }
       .dbg { top: auto; bottom: 74px; }
       body.is-sub .dbg { top: auto; }
@@ -404,7 +411,7 @@
       .detail { min-height: 0; max-height: none; overflow: visible; scroll-margin-top: 110px; }
       .sub__foot { position: sticky; bottom: 0; background: rgba(14,7,28,.9); backdrop-filter: blur(12px); }
       .sub__foot .desc, .hint--kbonly { display: none; }
-      .main .hints:first-child { display: none; }
+      .main .hints--keys { display: none; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation: none !important; transition-duration: .01s !important; transition-delay: 0s !important; }

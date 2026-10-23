@@ -2,11 +2,11 @@
 title: "Team"
 weight: 3
 display: "team"
-blurb: "AAA veterans, from Buenos Aires to the world."
+blurb: "AAA engineers, from Buenos Aires to the world."
 intro: "AAA industry veterans who love programming, computer graphics and low-level systems."
 
 # Each entry is one line of the big headline; the last line is highlighted.
-headline: ["Veterans of", "every console", "generation."]
+headline: ["Forged across", "every console", "generation."]
 lede: "We're a crew of AAA engineers who have spent our careers where games meet hardware. We've been building games together for a long time, and new silicon on our desks still makes us grin."
 
 pillars:
@@ -37,41 +37,31 @@ location:
   note: "Home base. The rest of the crew is spread across the globe, with hours that overlap the Americas and Europe."
 
 logos_title: "Tools of the trade"
-# icon: file in assets/logos/ (Simple Icons). No icon = text mark.
+# icon: file in assets/logos/ (cleaned single-colour SVGs, cropped to the artwork; shown at a fixed height)
 logos:
   - { name: "Unreal Engine", icon: "unrealengine" }
   - { name: "Unity", icon: "unity" }
   - { name: "CryEngine", icon: "cryengine" }
-  - { name: "Frostbite" }
-  - { name: "Snowdrop" }
-  - { name: "Anvil" }
+  - { name: "Frostbite", icon: "frostbite" }
+  - { name: "Snowdrop", icon: "snowdrop" }
+  - { name: "Ubisoft Anvil", icon: "anvil" }
   - { name: "Godot", icon: "godotengine" }
-  - { name: "C++", icon: "cplusplus" }
-  - { name: "C", icon: "c" }
-  - { name: "Rust", icon: "rust" }
-  - { name: "C#" }
-  - { name: "HLSL" }
-  - { name: "Python", icon: "python" }
-  - { name: "Lua", icon: "lua" }
-  - { name: "DirectX 12" }
+  - { name: "DirectX", icon: "directx" }
   - { name: "Vulkan", icon: "vulkan" }
   - { name: "OpenGL", icon: "opengl" }
-  - { name: "Metal" }
-  - { name: "NVIDIA", icon: "nvidia" }
-  - { name: "AMD", icon: "amd" }
   - { name: "PlayStation", icon: "playstation" }
-  - { name: "Xbox" }
+  - { name: "Xbox", icon: "xbox" }
   - { name: "Nintendo Switch", icon: "nintendoswitch" }
   - { name: "Steam", icon: "steam" }
   - { name: "Meta Quest", icon: "meta" }
-  - { name: "iOS", icon: "ios" }
+  - { name: "iOS", icon: "apple" }
   - { name: "Android", icon: "android" }
   - { name: "Perforce", icon: "perforce" }
   - { name: "Git", icon: "git" }
   - { name: "CMake", icon: "cmake" }
 
 cta:
-  title: "Need veterans on your team?"
+  title: "Want us on your team?"
   button: "Talk to us"
 ---
 Most of us have worked side by side for years, across studios, projects and platforms. That's the secret: when we join your team, we already work like one.

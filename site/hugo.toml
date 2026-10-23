@@ -1,4 +1,4 @@
-baseURL = "https://eventzero.example/"  # TODO: real domain
+baseURL = "https://event-0.com/"
 locale = "en"
 title = "Event Zero — AAA Engineering & Co-Development"
 
@@ -8,9 +8,7 @@ disableKinds = ["taxonomy", "term", "rss"]
 
 [params]
   description = "Event Zero is an engineering studio for AAA games: co-development, performance optimization, rendering, low-level systems and console hardware."
-  email = "hello@eventzero.example"  # TODO: real address
-  # TEST ONLY: extra placeholder posters on the Shipped screen to exercise scrolling. Set to 0 before launch.
-  testFiller = 16
+  email = "hello@event-0.com"
 
 [imaging.webp]
   quality = 82
