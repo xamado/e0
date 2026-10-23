@@ -255,6 +255,7 @@ void main(){ vec2 p = vec2(gl_VertexID == 1 ? 3. : -1., gl_VertexID == 2 ? 3. : 
       gl.uniform2f(p.u("M"), o.mouse[0], o.mouse[1]);
       gl.uniform1f(p.u("V"), o.view);
       gl.uniform1i(p.u("uDebug"), o.debug);
+      gl.uniform1f(p.u("uGrid"), o.grid || 0);
       for (const k of VEC) gl.uniform3fv(p.u(uName(k)), o.palette[k]);
       for (const k of NUM) gl.uniform1f(p.u(uName(k)), o.palette[k]);
     }

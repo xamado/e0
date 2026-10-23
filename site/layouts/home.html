@@ -136,6 +136,8 @@
       <button class="lab__btn" type="button" id="lab-reset">Reset this palette</button>
     </section>
     <section>
+      <label class="check"><input type="checkbox" id="lab-grid"> Grid in the palette colour (G)</label>
+      <label class="slider"><span>Grid opacity</span><input type="range" id="lab-gridamt" min="0" max="0.1" step="0.002"><output id="lab-gridamt-out"></output></label>
       <p class="lab__label caps"><span>Render view</span><span>V cycles</span></p>
       <select class="full" id="lab-view" aria-label="Render view">
         <option value="0">Final image</option><option value="1">Wireframe</option><option value="2">Normals</option>
@@ -156,7 +158,7 @@
     </section>
     <div class="lab__foot caps">
       <span style="display:flex;gap:6px"><button class="lab__btn" type="button" id="lab-copy">Copy settings</button><button class="lab__btn" type="button" id="lab-forget" title="Forget everything changed here and go back to the defaults">Reset to defaults</button></span>
-      <span>P lab · V view · M mute</span>
+      <span>P lab · G grid · V view · M mute</span>
     </div>
   </aside>
 

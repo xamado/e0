@@ -76,6 +76,8 @@
       pbright: +store.get("pbright", .2),
       density: +store.get("density", 512),
       pcolor: +store.get("pcolor", 0),
+      grid: !!store.get("grid", true),
+      gridAmt: +store.get("gridamt", .03),
       res: +store.get("res", 1),
     };
     const scene = clone(PRESETS[lab.preset]); // live palette, eased toward the target each frame
@@ -627,6 +629,7 @@
       if (e.key === "p" || e.key === "P") { e.preventDefault(); return toggleLab(); }
       if (e.key === "m" || e.key === "M") { e.preventDefault(); return setSound(!Sound.on); }
       if (e.key === "c" || e.key === "C") { e.preventDefault(); return togglePal(); }
+      if (e.key === "g" || e.key === "G") { e.preventDefault(); return setGrid(!lab.grid); }
       if (e.key === "v" || e.key === "V") { e.preventDefault(); return setView((lab.debug + 1) % 5); }
       const t = e.target;
       if (t.matches && t.matches("input, select, textarea")) { if (e.key === "Escape") toggleLab(false); return; }
@@ -721,7 +724,7 @@
       if (engine) engine.render({
         t: reduce ? 20 : (now - start) / 1000 + 20, dt, view: view.v, mouse: [m.x, m.y], palette: scene,
         debug: lab.debug, impulse, burst,
-        autoRes: lab.autoRes, res: lab.res, reduce, shift,
+        autoRes: lab.autoRes, res: lab.res, reduce, shift, grid: lab.grid ? lab.gridAmt : 0,
       });
       impulse = 0;
       updatePerf(now);
@@ -747,7 +750,7 @@
     const save = () => {
       store.set("preset", lab.preset); store.set("type", lab.type); store.set("per", lab.per); store.set("map", lab.map);
       store.set("clock", lab.clock);
-      store.set("autores", lab.autoRes); store.set("res", lab.res);
+      store.set("autores", lab.autoRes); store.set("res", lab.res); store.set("grid", lab.grid); store.set("gridamt", lab.gridAmt);
       store.set("pstyle", lab.pstyle); store.set("attr", lab.attr); store.set("trail", lab.trail);
       store.set("pbright", lab.pbright); store.set("density", lab.density); store.set("pcolor", lab.pcolor);
     };
@@ -802,6 +805,12 @@
     mapEl.addEventListener("change", (e) => { lab.map[e.target.dataset.k][e.target.dataset.f] = e.target.value; save(); applyScene(); });
     $("#lab-clock").addEventListener("change", (e) => { lab.clock = e.target.checked; save(); applyScene(); });
     $("#lab-view").addEventListener("change", (e) => setView(+e.target.value));
+    const setGrid = (v) => { lab.grid = v; $("#lab-grid").checked = v; save(); Sound.play("tab"); };
+    $("#lab-grid").addEventListener("change", (e) => setGrid(e.target.checked));
+    $("#lab-gridamt").addEventListener("input", (e) => {
+      lab.gridAmt = +e.target.value; $("#lab-gridamt-out").textContent = lab.gridAmt.toFixed(3);
+      if (!lab.grid) setGrid(true); else save();
+    });
     $("#lab-autores").addEventListener("change", (e) => { lab.autoRes = e.target.checked; save(); refreshLab(); });
     $("#lab-res").addEventListener("input", (e) => { lab.res = +e.target.value; $("#lab-res-out").textContent = Math.round(lab.res * 100) + "%"; save(); });
 
@@ -893,6 +902,8 @@
       $("#lab-pcolor").value = String(lab.pcolor);
       if (engine && !engine.floatOK) $("#lab-pnote").textContent = "This browser can't run the particle simulation (no float render targets), so only the sky shows.";
       $("#lab-autores").checked = lab.autoRes;
+      $("#lab-grid").checked = lab.grid;
+      $("#lab-gridamt").value = lab.gridAmt; $("#lab-gridamt-out").textContent = lab.gridAmt.toFixed(3);
       $("#lab-res").disabled = lab.autoRes;
       $("#lab-res").value = lab.res; $("#lab-res-out").textContent = Math.round(lab.res * 100) + "%";
       mapEl.querySelectorAll("span").forEach((s) => s.classList.toggle("is-here", s.dataset.k === screenKey()));
@@ -935,6 +946,7 @@
       const used = lab.per ? [...new Set(Object.values(lab.map).map((v) => v.preset))] : [lab.clock ? clockPreset() : lab.preset];
       const out = {
         perSection: lab.per, scene: lab.type, palette: lab.preset, clock: lab.clock, map: lab.per ? lab.map : undefined,
+        grid: lab.grid ? lab.gridAmt : 0,
         particles: { style: lab.pstyle, attractor: lab.attr, trails: lab.trail, brightness: lab.pbright, count: lab.density * lab.density, colour: lab.pcolor },
         palettes: Object.fromEntries(used.map((id) => [id, PRESETS[id]])),
       };

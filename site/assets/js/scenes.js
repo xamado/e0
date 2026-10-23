@@ -9,13 +9,14 @@
 (() => {
   const COMMON = /* glsl */ `
 precision highp float;
-uniform vec2 R; uniform float T; uniform vec2 M; uniform float V; uniform int uDebug;
+uniform vec2 R; uniform float T; uniform vec2 M; uniform float V; uniform int uDebug; uniform float uGrid;
 uniform vec3 uTop, uMid, uHor, uGlow, uFog, uFar, uNear, uSunCol, uSun;
 uniform float uStars, uEmbers, uFogAmt, uRough, uAurora, uCloud;
 out vec4 O;
 
 vec3 gN = vec3(0., 0., 1.);
 float gZ = 1., gCost = 0., gWire = 0.;
+float gGrid = -1.;   // optional grid for the palette-coloured overlay; defaults to gWire
 
 float h1(float x){ return fract(sin(x * 127.1) * 43758.5453); }
 float h2(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
@@ -113,6 +114,8 @@ vec3 finish(vec3 col, vec2 uv){
   if (uDebug == 2) return normalize(gN) * .5 + .5;
   if (uDebug == 3) return vec3(pow(1. - clamp(gZ, 0., 1.), 1.6));
   if (uDebug == 4) return vec3(clamp(gCost, 0., 1.));
+  // Grid overlay in the palette colour (scene lab › Grid)
+  if (uGrid > 0.) col = mix(col, uSunCol, clamp(gGrid < 0. ? gWire : gGrid, 0., 1.) * uGrid);   // uGrid = opacity (0 = off)
   float l = dot(col, vec3(.299, .587, .114));
   col = mix(col, mix(vec3(l), col, .7) * vec3(.85, .8, 1.), V * .6);
   col *= 1. - V * .35;
@@ -160,6 +163,7 @@ vec3 scene(vec2 uv){
   }
   col += embers(uv, asp, .65);
   gWire = max(wire, gridLine(p * 10.) * .12);
+  gGrid = gridLine(p * 10.);
   gCost = cover / 6.;
   return col;
 }
@@ -412,6 +416,7 @@ vec3 scene(vec2 uv){
   vec3 c = mix(uHor, uMid, smoothstep(0., .55, y));
   c = mix(c, uTop, smoothstep(.4, 1.05, y));
   gWire = gridLine(vec2(uv.x * asp, y) * 10.) * .1;
+  gGrid = gridLine(vec2(uv.x * asp, y) * 10.);
   return c * c * .45;
 }
 `;
