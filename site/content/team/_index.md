@@ -56,6 +56,8 @@ logos:
       - { name: "PlayStation", icon: "playstation" }
       - { name: "Xbox", icon: "xbox" }
       - { name: "Nintendo Switch", icon: "nintendoswitch" }
+      - { name: "Wii", icon: "wii" }
+      - { name: "Nintendo DS", icon: "nintendods" }
       - { name: "Steam", icon: "steam" }
       - { name: "Meta Quest", icon: "meta" }
       - { name: "iOS", icon: "apple" }

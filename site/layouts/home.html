@@ -104,15 +104,7 @@
   <aside class="lab" id="lab" aria-label="Scene lab">
     <div class="lab__head"><h2>Scene lab</h2><button type="button" id="lab-close" aria-label="Close">✕</button></div>
     <section>
-      <p class="lab__label caps"><span>Scene</span></p>
-      <div class="chips chips--types" id="lab-types"></div>
-    </section>
-    <section id="lab-particles" hidden>
-      <p class="lab__label caps"><span>Particles</span><b id="lab-pstyle-name">Flow</b></p>
-      <div class="chips chips--types" id="lab-pstyles"></div>
-      <select class="full" id="lab-attr" aria-label="Attractor">
-        <option value="0">Lorenz (butterfly)</option><option value="1">Aizawa</option><option value="2">Thomas</option><option value="3">Halvorsen</option>
-      </select>
+      <p class="lab__label caps"><span>Particles</span><b>Lorenz attractor</b></p>
       <label class="slider"><span>Trails</span><input type="range" id="lab-trail" min="0" max="1" step="0.05"><output id="lab-trail-out"></output></label>
       <label class="slider"><span>Brightness</span><input type="range" id="lab-pbright" min="0.2" max="3" step="0.05"><output id="lab-pbright-out"></output></label>
       <select class="full" id="lab-density" aria-label="Particle count">
@@ -122,11 +114,6 @@
         <option value="0">Colour: palette</option><option value="1">Colour: speed</option><option value="2">Colour: spectrum</option>
       </select>
       <small id="lab-pnote">Selecting a menu item or switching tabs sends a burst through the particles.</small>
-    </section>
-    <section>
-      <p class="lab__label caps"><span>Tweak palette</span><b id="lab-editing">Dusk</b></p>
-      <div id="lab-sliders" style="display:grid;gap:8px"></div>
-      <button class="lab__btn" type="button" id="lab-reset">Reset this palette</button>
     </section>
     <section>
       <label class="check"><input type="checkbox" id="lab-grid"> Grid in the palette colour (G)</label>
@@ -234,7 +221,7 @@
     {{- end -}}
     {{- $tabs = $tabs | append $tab -}}
   {{- end }}
-  <script type="application/json" id="site-data">{{ dict "email" $email "tabs" $tabs "captions" (.Params.captions | default dict) | jsonify | safeJS }}</script>
+  <script type="application/json" id="site-data">{{ dict "email" $email "tabs" $tabs "caption" (.Params.caption | default dict) | jsonify | safeJS }}</script>
 
   {{- /* Plain version of the same content for visitors without JavaScript and for crawlers */}}
   <noscript>
@@ -275,7 +262,7 @@
     </main>
   </noscript>
 
-  {{- $js := slice (resources.Get "js/scenes.js") (resources.Get "js/engine.js") (resources.Get "js/raycaster.js") (resources.Get "js/app.js") | resources.Concat "js/site.js" | minify | fingerprint }}
+  {{- $js := slice (resources.Get "js/shaders.js") (resources.Get "js/engine.js") (resources.Get "js/raycaster.js") (resources.Get "js/app.js") | resources.Concat "js/site.js" | minify | fingerprint }}
   <script src="{{ $js.RelPermalink }}" integrity="{{ $js.Data.Integrity }}"></script>
 </body>
 </html>

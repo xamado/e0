@@ -29,37 +29,22 @@
       clear() { try { Object.keys(localStorage).filter((k) => k.startsWith("e0lab")).forEach((k) => localStorage.removeItem(k)); } catch {} },
     };
 
-    // ── Scenes ───────────────────────────────────────────
-    // Colours are linear-ish RGB 0–1. sun = [x, y, size].
-    const PRESETS = {
-      dusk:   { name: "Dusk",   accent: "#ffc978", top: [.07, .04, .16], mid: [.42, .14, .42], hor: [1, .5, .32], glow: [1, .82, .55], fog: [1, .55, .45], far: [.85, .38, .45], near: [.06, .03, .12], sunCol: [1, .82, .55], sun: [.68, .40, .075], stars: 1, embers: 1, fogAmt: 1, rough: 1, aurora: 0, cloud: 1 },
-      golden: { name: "Golden", accent: "#ffd27a", top: [.16, .2, .42], mid: [.82, .45, .32], hor: [1, .7, .38], glow: [1, .92, .7], fog: [1, .76, .55], far: [.9, .58, .45], near: [.12, .06, .08], sunCol: [1, .95, .75], sun: [.3, .46, .09], stars: .2, embers: .6, fogAmt: 1.2, rough: .9, aurora: 0, cloud: 1.2 },
-      dawn:   { name: "Dawn",   accent: "#ffd3c4", top: [.22, .3, .55], mid: [.66, .52, .72], hor: [1, .74, .68], glow: [1, .95, .86], fog: [.95, .8, .85], far: [.72, .62, .78], near: [.14, .13, .24], sunCol: [1, .97, .9], sun: [.5, .36, .06], stars: .3, embers: 0, fogAmt: 1.6, rough: .8, aurora: 0, cloud: .8 },
-      night:  { name: "Night",  accent: "#a9c4ff", top: [.01, .02, .06], mid: [.04, .07, .18], hor: [.12, .18, .35], glow: [.6, .7, .9], fog: [.3, .4, .6], far: [.18, .24, .4], near: [.01, .02, .05], sunCol: [.92, .95, 1], sun: [.72, .7, .035], stars: 1.6, embers: 0, fogAmt: .8, rough: 1, aurora: .9, cloud: .4 },
-      mist:   { name: "Mist",   accent: "#f2f4f7", top: [.28, .32, .4], mid: [.48, .53, .6], hor: [.74, .77, .8], glow: [.95, .95, .92], fog: [.8, .83, .86], far: [.55, .6, .66], near: [.1, .12, .16], sunCol: [1, 1, .95], sun: [.62, .5, .05], stars: 0, embers: 0, fogAmt: 2.2, rough: .9, aurora: 0, cloud: 1.5 },
-      ember:  { name: "Ember",  accent: "#ff8a4d", top: [.06, .01, .02], mid: [.35, .04, .04], hor: [1, .3, .1], glow: [1, .6, .25], fog: [.9, .3, .15], far: [.6, .15, .1], near: [.04, .01, .01], sunCol: [1, .5, .2], sun: [.5, .34, .11], stars: .4, embers: 3, fogAmt: 1.3, rough: 1.3, aurora: 0, cloud: .6 },
-      alien:  { name: "Alien",  accent: "#8dffcf", top: [.02, .1, .12], mid: [.05, .4, .42], hor: [.5, 1, .75], glow: [.85, 1, .8], fog: [.4, .95, .8], far: [.6, .25, .55], near: [.08, .02, .1], sunCol: [.9, 1, .85], sun: [.25, .55, .12], stars: .8, embers: .5, fogAmt: 1, rough: 1.4, aurora: .3, cloud: .8 },
-      arctic: { name: "Arctic", accent: "#bfe3ff", top: [.05, .12, .3], mid: [.3, .55, .8], hor: [.8, .9, 1], glow: [1, 1, 1], fog: [.8, .9, 1], far: [.7, .8, .95], near: [.15, .2, .32], sunCol: [1, 1, 1], sun: [.2, .3, .05], stars: .3, embers: 0, fogAmt: 1.4, rough: 1.2, aurora: .5, cloud: 1 },
+    // ── Palettes (linear-ish RGB 0–1; accent is the UI colour) ──
+    const PALETTES = {
+      dusk:   { name: "Dusk",   accent: "#ffc978", top: [.07, .04, .16], mid: [.42, .14, .42], hor: [1, .5, .32], glow: [1, .82, .55], fog: [1, .55, .45], sunCol: [1, .82, .55] },
+      golden: { name: "Golden", accent: "#ffd27a", top: [.16, .2, .42], mid: [.82, .45, .32], hor: [1, .7, .38], glow: [1, .92, .7], fog: [1, .76, .55], sunCol: [1, .95, .75] },
+      dawn:   { name: "Dawn",   accent: "#ffd3c4", top: [.22, .3, .55], mid: [.66, .52, .72], hor: [1, .74, .68], glow: [1, .95, .86], fog: [.95, .8, .85], sunCol: [1, .97, .9] },
+      night:  { name: "Night",  accent: "#a9c4ff", top: [.01, .02, .06], mid: [.04, .07, .18], hor: [.12, .18, .35], glow: [.6, .7, .9], fog: [.3, .4, .6], sunCol: [.92, .95, 1] },
+      mist:   { name: "Mist",   accent: "#f2f4f7", top: [.28, .32, .4], mid: [.48, .53, .6], hor: [.74, .77, .8], glow: [.95, .95, .92], fog: [.8, .83, .86], sunCol: [1, 1, .95] },
+      ember:  { name: "Ember",  accent: "#ff8a4d", top: [.06, .01, .02], mid: [.35, .04, .04], hor: [1, .3, .1], glow: [1, .6, .25], fog: [.9, .3, .15], sunCol: [1, .5, .2] },
+      alien:  { name: "Alien",  accent: "#8dffcf", top: [.02, .1, .12], mid: [.05, .4, .42], hor: [.5, 1, .75], glow: [.85, 1, .8], fog: [.4, .95, .8], sunCol: [.9, 1, .85] },
+      arctic: { name: "Arctic", accent: "#bfe3ff", top: [.05, .12, .3], mid: [.3, .55, .8], hor: [.8, .9, 1], glow: [1, 1, 1], fog: [.8, .9, 1], sunCol: [1, 1, 1] },
     };
-    const VEC = ["top", "mid", "hor", "glow", "fog", "far", "near", "sunCol", "sun"];
-    const NUM = ["stars", "embers", "fogAmt", "rough", "aurora", "cloud"];
-    const clone = (o) => JSON.parse(JSON.stringify(o));
-    const DEFAULTS = clone(PRESETS);
-    const saved = store.get("presets", null);
-    if (saved) for (const id in PRESETS) if (saved[id]) {
-      for (const k of VEC) if (Array.isArray(saved[id][k]) && saved[id][k].length === 3) PRESETS[id][k] = saved[id][k];
-      for (const k of NUM) if (typeof saved[id][k] === "number") PRESETS[id][k] = saved[id][k];
-    }
-    const TYPES = window.E0_SCENES ? Object.keys(window.E0_SCENES.types) : ["mountains"];
-    const okType = (t) => (TYPES.includes(t) ? t : "mountains");
-    const okPal = (id) => (PRESETS[id] ? id : "dusk");
+    const PALETTE_KEYS = ["top", "mid", "hor", "glow", "fog", "sunCol"];
     const lab = {
-      type: okType(store.get("type", "particles")),
-      preset: okPal(store.get("preset", "ember")),
+      preset: PALETTES[store.get("preset")] ? store.get("preset") : "arctic",
       debug: 0,
       autoRes: store.get("autores", true) !== false,
-      pstyle: ["flow", "attractor", "galaxy", "shapes", "gravity", "swarm"].includes(store.get("pstyle", "attractor")) ? store.get("pstyle", "attractor") : "attractor",
-      attr: +store.get("attr", 0),
       trail: +store.get("trail", 1),
       pbright: +store.get("pbright", .2),
       density: +store.get("density", 512),
@@ -68,8 +53,8 @@
       gridAmt: +store.get("gridamt", .03),
       res: +store.get("res", 1),
     };
-    const scene = clone(PRESETS[lab.preset]); // live palette, eased toward the target each frame
-    let sceneTarget = PRESETS[lab.preset];
+    // Live palette, eased toward the selected one each frame
+    const palette = Object.fromEntries(PALETTE_KEYS.map((k) => [k, [...PALETTES[lab.preset][k]]]));
 
     // ── Sound: tiny synthesized UI sounds (no audio files) ─
     const Sound = (() => {
@@ -403,21 +388,15 @@
       if (!narrow.matches) setTimeout(() => input.focus({ preventScroll: true }), 450);
     }
 
-    // Main-menu caption describing the background (content/_index.md → captions)
-    let capKey = "";
+    // Main-menu caption describing the background (content/_index.md → caption)
+    let capDensity = 0;
     function updateCaption() {
-      const ty = lab.type;
-      const key = ty === "particles" ? (lab.pstyle === "attractor" ? `particles-attractor-${lab.attr}` : `particles-${lab.pstyle}`) : ty;
-      const full = `${key}|${lab.density}`;
-      if (full === capKey) return;
-      capKey = full;
-      const c = (DATA.captions || {})[key];
-      const box = $("#scene-cap");
-      box.hidden = !c;
-      if (!c) return;
-      const count = (lab.density * lab.density).toLocaleString("en-US");
-      $("#scene-cap-t").textContent = c.title;
-      $("#scene-cap-d").textContent = (c.text || "").replace("{count}", count);
+      if (lab.density === capDensity) return;
+      capDensity = lab.density;
+      const c = DATA.caption || {};
+      $("#scene-cap").hidden = !c.title;
+      $("#scene-cap-t").textContent = c.title || "";
+      $("#scene-cap-d").textContent = (c.text || "").replace("{count}", (lab.density * lab.density).toLocaleString("en-US"));
     }
 
     function renderDetail(dir) {
@@ -684,11 +663,8 @@
     const engine = window.E0Engine ? E0Engine.createEngine(canvas) : null;
     if (!engine) canvas.style.background = "linear-gradient(#1a0f3a, #6b2a6e 55%, #ff8a5b 75%, #2a1645 76%)";
 
-    const mouse = { x: 0, y: 0 }, m = { x: 0, y: 0 };
-    addEventListener("pointermove", (e) => { mouse.x = e.clientX / innerWidth - .5; mouse.y = e.clientY / innerHeight - .5; });
-    let burst = 0, impulse = 0, shape = 0, shapeTimer = 0, shift = 0;
-    // A burst: one-frame kick for the particle sim plus a decaying level; shapes morph to the next form.
-    const kick = () => { burst = 1; impulse = 1; if (lab.pstyle === "shapes") { shape++; shapeTimer = 0; } };
+    let impulse = 0, shift = 0;
+    const kick = () => { impulse = 1; };   // one-frame burst through the particles
 
     const start = performance.now();
     let last = start;
@@ -698,20 +674,16 @@
       // Critically damped ease toward the target view (snappy, no overshoot).
       view.v += (view.target - view.v) * (reduce ? 1 : 1 - Math.exp(-dt * 5));
       const ks = reduce ? 1 : 1 - Math.exp(-dt * 2.5);
-      for (const k of VEC) for (let j = 0; j < 3; j++) scene[k][j] += (sceneTarget[k][j] - scene[k][j]) * ks;
-      for (const k of NUM) scene[k] += (sceneTarget[k] - scene[k]) * ks;
-      m.x += (mouse.x - m.x) * .04; m.y += (mouse.y - m.y) * .04;
-      burst *= Math.exp(-dt * 3);
-      // 3D particle styles sit to the right of the main menu so they don't fight the text
+      const target = PALETTES[lab.preset];
+      for (const k of PALETTE_KEYS) for (let j = 0; j < 3; j++) palette[k][j] += (target[k][j] - palette[k][j]) * ks;
+      // The attractor sits to the right of the main menu so it doesn't fight the text
       const shiftT = state === "menu" && !narrow.matches ? innerWidth / innerHeight * .32 : 0;
       shift += (shiftT - shift) * (reduce ? 1 : 1 - Math.exp(-dt * 2));
-      shapeTimer += dt;
-      if (lab.pstyle === "shapes" && shapeTimer > 9) { shape++; shapeTimer = 0; }
-      if (engine) engine.setParticles({ style: lab.pstyle, attr: lab.attr, trail: lab.trail, bright: lab.pbright, density: lab.density, color: lab.pcolor, shape });
+      if (engine) engine.setParticles({ trail: lab.trail, bright: lab.pbright, density: lab.density, color: lab.pcolor });
       updateCaption();
       if (engine) engine.render({
-        t: reduce ? 20 : (now - start) / 1000 + 20, dt, view: view.v, mouse: [m.x, m.y], palette: scene,
-        debug: lab.debug, impulse, burst,
+        t: reduce ? 20 : (now - start) / 1000 + 20, dt, view: view.v, palette,
+        debug: lab.debug, impulse,
         autoRes: lab.autoRes, res: lab.res, reduce, shift, grid: lab.grid ? lab.gridAmt : 0,
       });
       impulse = 0;
@@ -721,33 +693,23 @@
     });
 
     // ── Scene lab ────────────────────────────────────────
-    const SLIDERS = [
-      ["sun", 1, "Sun height", .1, .85, .01], ["sun", 0, "Sun position", 0, 1, .01], ["sun", 2, "Sun size", .015, .16, .001],
-      ["fogAmt", -1, "Fog", 0, 3, .05], ["cloud", -1, "Clouds", 0, 2, .05], ["stars", -1, "Stars", 0, 3, .05],
-      ["aurora", -1, "Aurora", 0, 1.5, .05], ["embers", -1, "Embers", 0, 4, .05], ["rough", -1, "Roughness", .3, 2, .05],
-    ];
     const labEl = $("#lab"), labBtn = $("#lab-btn"), sndBtn = $("#snd-btn");
-    const typesEl = $("#lab-types"), slidersEl = $("#lab-sliders");
-    const typeLabel = (t) => (window.E0_SCENES ? E0_SCENES.types[t].label : t);
     const css = (c) => `rgb(${c.map((v) => Math.round(Math.min(1, v) * 255)).join(",")})`;
     const save = () => {
-      store.set("preset", lab.preset); store.set("type", lab.type);
+      store.set("preset", lab.preset);
       store.set("autores", lab.autoRes); store.set("res", lab.res); store.set("grid", lab.grid); store.set("gridamt", lab.gridAmt);
-      store.set("pstyle", lab.pstyle); store.set("attr", lab.attr); store.set("trail", lab.trail);
+      store.set("trail", lab.trail);
       store.set("pbright", lab.pbright); store.set("density", lab.density); store.set("pcolor", lab.pcolor);
     };
 
     function applyScene() {
-      const P = PRESETS[lab.preset];
-      sceneTarget = P;
-      document.documentElement.style.setProperty("--sun", P.accent);
-      if (engine) engine.setScene(lab.type);
+      document.documentElement.style.setProperty("--sun", PALETTES[lab.preset].accent);
       refreshLab();
     }
 
     // ── Palette picker (top-right swatches) ──
     const palBtn = $("#pal-btn"), palPop = $("#palpop");
-    palPop.innerHTML = Object.entries(PRESETS).map(([id, P]) =>
+    palPop.innerHTML = Object.entries(PALETTES).map(([id, P]) =>
       `<button type="button" role="radio" data-id="${id}" title="${P.name}" aria-label="${P.name}" style="--a:${css(P.hor)};--b:${css(P.mid)};--c:${P.accent}"></button>`).join("");
     const togglePal = (force) => {
       const open = force ?? !palPop.classList.contains("is-open");
@@ -763,13 +725,6 @@
     });
     addEventListener("click", (e) => { if (!e.target.closest(".palpick")) togglePal(false); });
 
-    typesEl.innerHTML = TYPES.map((t) => `<button class="chip" type="button" data-t="${t}">${esc(typeLabel(t))}</button>`).join("");
-    typesEl.addEventListener("click", (e) => {
-      const b = e.target.closest(".chip"); if (!b) return;
-      lab.type = b.dataset.t;
-      save(); Sound.play("move"); applyScene();
-    });
-
     $("#lab-view").addEventListener("change", (e) => setView(+e.target.value));
     const setGrid = (v) => { lab.grid = v; $("#lab-grid").checked = v; save(); Sound.play("tab"); };
     $("#lab-grid").addEventListener("change", (e) => setGrid(e.target.checked));
@@ -780,14 +735,6 @@
     $("#lab-autores").addEventListener("change", (e) => { lab.autoRes = e.target.checked; save(); refreshLab(); });
     $("#lab-res").addEventListener("input", (e) => { lab.res = +e.target.value; $("#lab-res-out").textContent = Math.round(lab.res * 100) + "%"; save(); });
 
-    const PSTYLES = [["flow", "Flow"], ["attractor", "Attractor"], ["galaxy", "Galaxy"], ["shapes", "Shapes"], ["gravity", "Gravity waves"], ["swarm", "Swarm"]];
-    const pstylesEl = $("#lab-pstyles");
-    pstylesEl.innerHTML = PSTYLES.map(([id, label]) => `<button class="chip" type="button" data-p="${id}">${label}</button>`).join("");
-    pstylesEl.addEventListener("click", (e) => {
-      const b = e.target.closest(".chip"); if (!b) return;
-      lab.pstyle = b.dataset.p; save(); Sound.play("move"); refreshLab();
-    });
-    $("#lab-attr").addEventListener("change", (e) => { lab.attr = +e.target.value; save(); });
     $("#lab-trail").addEventListener("input", (e) => { lab.trail = +e.target.value; $("#lab-trail-out").textContent = lab.trail.toFixed(2); save(); });
     $("#lab-pbright").addEventListener("input", (e) => { lab.pbright = +e.target.value; $("#lab-pbright-out").textContent = lab.pbright.toFixed(2); save(); });
     $("#lab-density").addEventListener("change", (e) => { lab.density = +e.target.value; save(); });
@@ -826,47 +773,19 @@
       if (lab.debug) { $("#dbg-perf").textContent = txt; drawGraph($("#dbg-graph")); }
     }
 
-    slidersEl.innerHTML = SLIDERS.map(([k, j, label, min, max, step], n) =>
-      `<label class="slider"><span>${label}</span><input type="range" data-n="${n}" min="${min}" max="${max}" step="${step}"><output></output></label>`).join("");
-    slidersEl.addEventListener("input", (e) => {
-      const [k, j] = SLIDERS[+e.target.dataset.n];
-      const P = PRESETS[lab.preset], v = +e.target.value;
-      if (j >= 0) P[k][j] = v; else P[k] = v;
-      e.target.nextElementSibling.textContent = v.toFixed(2);
-      store.set("presets", PRESETS);
-    });
-    $("#lab-reset").addEventListener("click", () => {
-      const id = lab.preset;
-      PRESETS[id] = clone(DEFAULTS[id]);
-      store.set("presets", PRESETS);
-      applyScene();
-    });
-
     function refreshLab() {
-      const id = lab.preset, P = PRESETS[id];
-      $("#lab-editing").textContent = P.name;
+      const id = lab.preset;
       palPop.querySelectorAll("button").forEach((c) => { c.classList.toggle("is-on", c.dataset.id === id); c.setAttribute("aria-checked", c.dataset.id === id); });
-      typesEl.querySelectorAll(".chip").forEach((c) => c.classList.toggle("is-on", c.dataset.t === lab.type));
-      $("#lab-particles").hidden = lab.type !== "particles";
-      pstylesEl.querySelectorAll(".chip").forEach((c) => c.classList.toggle("is-on", c.dataset.p === lab.pstyle));
-      $("#lab-pstyle-name").textContent = PSTYLES.find(([id]) => id === lab.pstyle)[1];
-      $("#lab-attr").hidden = lab.pstyle !== "attractor";
-      $("#lab-attr").value = String(lab.attr);
       $("#lab-trail").value = lab.trail; $("#lab-trail-out").textContent = lab.trail.toFixed(2);
       $("#lab-pbright").value = lab.pbright; $("#lab-pbright-out").textContent = lab.pbright.toFixed(2);
       $("#lab-density").value = String(lab.density);
       $("#lab-pcolor").value = String(lab.pcolor);
-      if (engine && !engine.floatOK) $("#lab-pnote").textContent = "This browser can't run the particle simulation (no float render targets), so only the sky shows.";
+      if (engine && !engine.floatOK) $("#lab-pnote").textContent = "This browser can't run the particle simulation (no float render targets), so only the backdrop shows.";
       $("#lab-autores").checked = lab.autoRes;
       $("#lab-grid").checked = lab.grid;
       $("#lab-gridamt").value = lab.gridAmt; $("#lab-gridamt-out").textContent = lab.gridAmt.toFixed(3);
       $("#lab-res").disabled = lab.autoRes;
       $("#lab-res").value = lab.res; $("#lab-res-out").textContent = Math.round(lab.res * 100) + "%";
-      slidersEl.querySelectorAll("input").forEach((inp) => {
-        const [k, j] = SLIDERS[+inp.dataset.n];
-        const v = j >= 0 ? P[k][j] : P[k];
-        inp.value = v; inp.nextElementSibling.textContent = (+v).toFixed(2);
-      });
     }
 
     function toggleLab(force) {
@@ -899,10 +818,9 @@
 
     $("#lab-copy").addEventListener("click", async (e) => {
       const out = {
-        scene: lab.type, palette: lab.preset,
+        palette: lab.preset,
         grid: lab.grid ? lab.gridAmt : 0,
-        particles: { style: lab.pstyle, attractor: lab.attr, trails: lab.trail, brightness: lab.pbright, count: lab.density * lab.density, colour: lab.pcolor },
-        palettes: { [lab.preset]: PRESETS[lab.preset] },
+        particles: { trails: lab.trail, brightness: lab.pbright, count: lab.density * lab.density, colour: lab.pcolor },
       };
       const btn = e.currentTarget;
       try { await navigator.clipboard.writeText(JSON.stringify(out, null, 1)); btn.textContent = "Copied!"; }
@@ -913,7 +831,6 @@
     // ── Boot ─────────────────────────────────────────────
     selectMenu(0, true);
     applyScene();
-    Object.assign(scene, clone(sceneTarget));
     const deep = TABS.findIndex((t) => "#" + t.id === location.hash);
     if (deep >= 0) { setState("menu"); openSub(deep, true); }
   })();

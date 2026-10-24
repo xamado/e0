@@ -271,7 +271,8 @@
     /* Logos are cropped to their artwork, so a fixed height keeps wordmarks and icons balanced */
     .tm__logos svg { height: 40px; width: auto; max-width: 190px; display: block; fill: currentColor; }
     .tm__logos li[title="Snowdrop"] svg { height: 56px; max-width: 220px; }  /* tall mark with a small wordmark */
-    .tm__logos li[title="CryEngine"] svg { height: 30px; }  /* the eye is wide; keep it in proportion */
+    .tm__logos li[title="CryEngine"] svg { height: 30px; }
+    .tm__logos li[title="Nintendo DS"] svg { height: 26px; max-width: 200px; }  /* very wide wordmark */  /* the eye is wide; keep it in proportion */
     .tm__logos span { font: 700 22px/42px var(--cond); letter-spacing: .08em; text-transform: uppercase; display: inline-block; }
 
     .tm__cta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px; padding: 40px 0 10px; border-top: 1px solid var(--line); }
@@ -435,8 +436,6 @@
     .lab section[hidden] { display: none; }
     .lab__label { display: flex; justify-content: space-between; color: var(--dim); }
     .lab__label b { color: var(--sun); font-weight: 600; }
-    .chips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-    .chips--types .chip { padding: 9px 4px; }
     .lab select.full { width: 100%; background: rgba(255,244,234,.06); color: var(--text); border: 1px solid var(--line); padding: 6px 8px; font: 500 13px/1.2 var(--sans); }
     .lab select.full option { background: #1a0f2e; }
     .lab small { color: var(--dim); font-size: 12px; line-height: 1.4; }
@@ -449,9 +448,6 @@
     .dbg canvas { width: 140px; height: 30px; display: block; }
     .dbg .perf { color: #bff6ff; min-width: 0; }
     body.is-sub .dbg { top: 92px; }
-    .chip { display: grid; gap: 6px; justify-items: center; padding: 8px 4px 7px; border: 1px solid var(--line); font: 600 11px/1 var(--cond); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); transition: border-color .15s, color .15s; }
-    .chip:hover { color: var(--text); }
-    .chip.is-on { border-color: var(--sun); color: var(--text); }
     .check { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 14px; cursor: pointer; }
     .check input { accent-color: var(--sun); width: 16px; height: 16px; }
     .slider { display: grid; grid-template-columns: 96px 1fr 36px; gap: 10px; align-items: center; font-size: 13px; color: var(--muted); }

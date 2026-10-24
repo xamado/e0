@@ -22,6 +22,7 @@ Each menu entry is a folder in `content/`, ordered by `weight` in its `_index.md
 ## Code
 
 - `assets/css/site.css`: styles
-- `assets/js/scenes.js`, `engine.js`: WebGL background scenes and particle simulation
+- `assets/js/shaders.js`, `engine.js`: WebGL2 background (Lorenz attractor particles, backdrop, trails)
+- `assets/js/raycaster.js`: the hidden ASCII game in the contact terminal (`./do-not-run`)
 - `assets/js/app.js`: menu, input, sounds and scene lab; reads the compiled content from
   `<script id="site-data">` in the page
