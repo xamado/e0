@@ -43,7 +43,6 @@
     const PALETTE_KEYS = ["top", "mid", "hor", "glow", "fog", "sunCol"];
     const lab = {
       preset: PALETTES[store.get("preset")] ? store.get("preset") : "arctic",
-      debug: 0,
       autoRes: store.get("autores", true) !== false,
       trail: +store.get("trail", 1),
       pbright: +store.get("pbright", .2),
@@ -59,8 +58,9 @@
     // ── Sound: tiny synthesized UI sounds (no audio files) ─
     const Sound = (() => {
       let ctx, master, wet, lastMove = 0;
-      let on = store.get("snd", true), vol = store.get("vol", .6);
-      const level = () => (on ? vol * .5 : 0);
+      const VOLUME = .3;   // master gain for all UI sounds
+      let on = store.get("snd", true);
+      const level = () => (on ? VOLUME : 0);
       function init() {
         if (ctx) { if (ctx.state === "suspended") ctx.resume(); return; }
         const AC = window.AudioContext || window.webkitAudioContext;
@@ -108,9 +108,8 @@
       return {
         init,
         play(k) { if (!ctx || !on) return; if (ctx.state === "suspended") ctx.resume(); sounds[k](); },
-        get on() { return on; }, get vol() { return vol; },
+        get on() { return on; },
         setOn(v) { on = v; store.set("snd", v); if (master) master.gain.value = level(); },
-        setVol(v) { vol = v; store.set("vol", v); if (master) master.gain.value = level(); },
       };
     })();
     addEventListener("pointerdown", () => Sound.init(), true);
@@ -593,11 +592,6 @@
     addEventListener("keydown", (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.target.matches && e.target.matches("input, select, textarea")) { if (e.key === "Escape") toggleLab(false); return; }
-      if (e.key === "p" || e.key === "P") { e.preventDefault(); return toggleLab(); }
-      if (e.key === "m" || e.key === "M") { e.preventDefault(); return setSound(!Sound.on); }
-      if (e.key === "c" || e.key === "C") { e.preventDefault(); return togglePal(); }
-      if (e.key === "g" || e.key === "G") { e.preventDefault(); return setGrid(!lab.grid); }
-      if (e.key === "v" || e.key === "V") { e.preventDefault(); return setView((lab.debug + 1) % 5); }
       const t = e.target;
       if (t.matches && t.matches("input, select, textarea")) { if (e.key === "Escape") toggleLab(false); return; }
       if (t.closest && t.closest(".lab, .tools") && (e.key === "Enter" || e.key === " ")) return;
@@ -683,7 +677,7 @@
       updateCaption();
       if (engine) engine.render({
         t: reduce ? 20 : (now - start) / 1000 + 20, dt, view: view.v, palette,
-        debug: lab.debug, impulse,
+        impulse,
         autoRes: lab.autoRes, res: lab.res, reduce, shift, grid: lab.grid ? lab.gridAmt : 0,
       });
       impulse = 0;
@@ -725,7 +719,6 @@
     });
     addEventListener("click", (e) => { if (!e.target.closest(".palpick")) togglePal(false); });
 
-    $("#lab-view").addEventListener("change", (e) => setView(+e.target.value));
     const setGrid = (v) => { lab.grid = v; $("#lab-grid").checked = v; save(); Sound.play("tab"); };
     $("#lab-grid").addEventListener("change", (e) => setGrid(e.target.checked));
     $("#lab-gridamt").addEventListener("input", (e) => {
@@ -740,16 +733,7 @@
     $("#lab-density").addEventListener("change", (e) => { lab.density = +e.target.value; save(); });
     $("#lab-pcolor").addEventListener("change", (e) => { lab.pcolor = +e.target.value; save(); });
 
-    const VIEW_NAMES = ["Final", "Wireframe", "Normals", "Depth", "Cost heat map"];
-    function setView(v) {
-      lab.debug = v;
-      $("#lab-view").value = String(v);
-      $("#dbg-name").textContent = VIEW_NAMES[v];
-      $("#dbg").classList.toggle("is-on", v > 0);
-      Sound.play("tab");
-    }
-
-    // Frame-time readout + graph (lab and debug HUD)
+    // Frame-time readout + graph in the scene lab
     let perfNext = 0;
     function drawGraph(cv) {
       const st = engine.stats, x = cv.getContext("2d"), W = cv.width, H = cv.height, n = st.history.length;
@@ -770,7 +754,6 @@
       const st = engine.stats;
       const txt = `${st.ms.toFixed(1)} ms · ${Math.round(st.fps)} fps · res ${Math.round(st.scale * 100)}%` + (st.gpuMs != null ? ` · GPU ${st.gpuMs.toFixed(1)} ms` : "");
       if (labEl.classList.contains("is-open")) { $("#lab-perf").textContent = txt; drawGraph($("#lab-graph")); }
-      if (lab.debug) { $("#dbg-perf").textContent = txt; drawGraph($("#dbg-graph")); }
     }
 
     function refreshLab() {
@@ -800,16 +783,10 @@
     function setSound(v) {
       Sound.setOn(v);
       sndBtn.setAttribute("aria-pressed", v);
-      $("#lab-snd").checked = v;
       if (v) { Sound.init(); Sound.play("move"); }
     }
     sndBtn.addEventListener("click", () => setSound(!Sound.on));
-    $("#lab-snd").addEventListener("change", (e) => setSound(e.target.checked));
-    const volEl = $("#lab-vol");
-    volEl.value = Sound.vol; $("#lab-vol-out").textContent = Math.round(Sound.vol * 100);
-    volEl.addEventListener("input", () => { Sound.setVol(+volEl.value); $("#lab-vol-out").textContent = Math.round(volEl.value * 100); });
-    volEl.addEventListener("change", () => Sound.play("move"));
-    sndBtn.setAttribute("aria-pressed", Sound.on); $("#lab-snd").checked = Sound.on;
+    sndBtn.setAttribute("aria-pressed", Sound.on);
 
     $("#lab-forget").addEventListener("click", () => {
       store.clear();

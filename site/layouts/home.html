@@ -83,19 +83,19 @@
 
   <!-- Tools: sound toggle + scene lab (for trying variations) -->
   <div class="tools">
-    <button class="tool" id="snd-btn" type="button" aria-pressed="true" title="Sound (M)" aria-label="Sound">
+    <button class="tool" id="snd-btn" type="button" aria-pressed="true" title="Sound" aria-label="Sound">
       <svg class="on" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 6h3l4-3v10l-4-3H2z"/><path d="M11.5 5.5a3.5 3.5 0 0 1 0 5M13.5 3.5a6.5 6.5 0 0 1 0 9"/></svg>
       <svg class="off" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 6h3l4-3v10l-4-3H2z"/><path d="M11 6l4 4M15 6l-4 4"/></svg>
       <span>Sound</span>
     </button>
     <span class="palpick">
-      <button class="tool" id="pal-btn" type="button" aria-expanded="false" aria-controls="palpop" title="Colours (C)" aria-label="Colours">
+      <button class="tool" id="pal-btn" type="button" aria-expanded="false" aria-controls="palpop" title="Colours" aria-label="Colours">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M8 1.75a6.25 6.25 0 1 0 0 12.5c.9 0 1.4-.6 1.4-1.3 0-.8-.6-1.1-.6-1.9 0-.8.6-1.4 1.5-1.4h1.6c1.6 0 2.85-1.2 2.85-2.9C14.75 4.2 11.75 1.75 8 1.75Z"/><circle cx="4.9" cy="7.2" r=".9" fill="currentColor" stroke="none"/><circle cx="6.9" cy="4.5" r=".9" fill="currentColor" stroke="none"/><circle cx="10.2" cy="4.7" r=".9" fill="currentColor" stroke="none"/></svg>
         <span>Colours</span>
       </button>
       <span class="palpop" id="palpop" role="radiogroup" aria-label="Colour palette"></span>
     </span>
-    <button class="tool" id="lab-btn" type="button" aria-expanded="false" aria-controls="lab" title="Scene lab (P)" aria-label="Scene lab">
+    <button class="tool" id="lab-btn" type="button" aria-expanded="false" aria-controls="lab" title="Scene lab" aria-label="Scene lab">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 4h1.2M6.8 4H14M2 8h6.2M11.8 8H14M2 12h3.2M8.8 12H14"/><circle cx="5" cy="4" r="1.6"/><circle cx="10" cy="8" r="1.6"/><circle cx="7" cy="12" r="1.6"/></svg>
       <span>Scene</span>
     </button>
@@ -116,13 +116,8 @@
       <small id="lab-pnote">Selecting a menu item or switching tabs sends a burst through the particles.</small>
     </section>
     <section>
-      <label class="check"><input type="checkbox" id="lab-grid"> Grid in the palette colour (G)</label>
+      <label class="check"><input type="checkbox" id="lab-grid"> Grid in the palette colour</label>
       <label class="slider"><span>Grid opacity</span><input type="range" id="lab-gridamt" min="0" max="0.1" step="0.002"><output id="lab-gridamt-out"></output></label>
-      <p class="lab__label caps"><span>Render view</span><span>V cycles</span></p>
-      <select class="full" id="lab-view" aria-label="Render view">
-        <option value="0">Final image</option><option value="1">Wireframe</option><option value="2">Normals</option>
-        <option value="3">Depth</option><option value="4">Cost heat map</option>
-      </select>
     </section>
     <section>
       <p class="lab__label caps"><span>Performance</span></p>
@@ -131,23 +126,11 @@
       <label class="check"><input type="checkbox" id="lab-autores"> Auto resolution (keeps frames on budget)</label>
       <label class="slider"><span>Resolution</span><input type="range" id="lab-res" min="0.3" max="1" step="0.05"><output id="lab-res-out"></output></label>
     </section>
-    <section>
-      <p class="lab__label caps"><span>Sound</span></p>
-      <label class="check"><input type="checkbox" id="lab-snd"> UI sounds</label>
-      <label class="slider"><span>Volume</span><input type="range" id="lab-vol" min="0" max="1" step="0.05"><output id="lab-vol-out"></output></label>
-    </section>
     <div class="lab__foot caps">
       <span style="display:flex;gap:6px"><button class="lab__btn" type="button" id="lab-copy">Copy settings</button><button class="lab__btn" type="button" id="lab-forget" title="Forget everything changed here and go back to the defaults">Reset to defaults</button></span>
-      <span>P lab · G grid · V view · M mute</span>
     </div>
   </aside>
 
-  <div class="dbg" id="dbg" aria-live="polite">
-    <span class="caps">View · <b id="dbg-name">Wireframe</b></span>
-    <canvas id="dbg-graph" width="280" height="60"></canvas>
-    <span class="perf" id="dbg-perf"></span>
-    <span class="glyph">V</span>
-  </div>
 
 
   {{- /* Menu content compiled from the Markdown files in content/. Read by assets/js/app.js. */ -}}
@@ -225,7 +208,7 @@
 
   {{- /* Plain version of the same content for visitors without JavaScript and for crawlers */}}
   <noscript>
-    <style>body{overflow:auto}#sky,.shade,.screen,.tools,.sweep,.dbg,.lab{display:none!important}.nojs{max-width:760px;margin:0 auto;padding:48px 20px}.nojs h2{margin:48px 0 8px}.nojs h3{margin:28px 0 6px;font-size:22px}.nojs a{color:var(--sun)}</style>
+    <style>body{overflow:auto}#sky,.shade,.screen,.tools,.sweep,.lab{display:none!important}.nojs{max-width:760px;margin:0 auto;padding:48px 20px}.nojs h2{margin:48px 0 8px}.nojs h3{margin:28px 0 6px;font-size:22px}.nojs a{color:var(--sun)}</style>
     <main class="nojs">
       <h1>{{ .Title }}</h1>
       <p>{{ .Params.tagline }} · <a href="mailto:{{ $email }}">{{ $email }}</a></p>

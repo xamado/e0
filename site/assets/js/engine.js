@@ -129,7 +129,7 @@
       const prevT = trails[trailCur], nextT = trails[1 - trailCur];
       gl.bindFramebuffer(gl.FRAMEBUFFER, nextT.fb);
       gl.viewport(0, 0, w, h);
-      const decay = o.debug ? 0 : cfg.trail * .97;
+      const decay = cfg.trail * .97;
       if (decay > 0 && !resized) {
         gl.useProgram(P.trail.prog);
         bindTex(0, prevT.tex, P.trail, "uTex");
@@ -143,7 +143,6 @@
       bindTex(0, cur.pos, p, "uPos"); bindTex(1, cur.vel, p, "uVel");
       gl.uniform1i(p.u("uN"), sim.N);
       gl.uniform1i(p.u("uColor"), cfg.color);
-      gl.uniform1i(p.u("uDebug"), o.debug);
       gl.uniformMatrix3fv(p.u("uRot"), false, rotation(o));
       gl.uniform2f(p.u("uShift"), o.shift || 0, 0);
       gl.uniform1f(p.u("uAsp"), asp);
@@ -162,7 +161,6 @@
       gl.useProgram(P.composite.prog);
       bindTex(0, nextT.tex, P.composite, "uTex");
       gl.uniform2f(P.composite.u("R"), w, h);
-      gl.uniform1i(P.composite.u("uDebug"), o.debug);
       fullscreen();
       gl.disable(gl.BLEND);
     }
@@ -175,7 +173,7 @@
 
     // ── Frame ─────────────────────────────────────────
     function render(o) {
-      // o: { t, dt, view, palette, debug, impulse, grid, shift, autoRes, res, reduce }
+      // o: { t, dt, view, palette, impulse, grid, shift, autoRes, res, reduce }
       const dtMs = o.dt * 1000;
       stats.ms += (dtMs - stats.ms) * .05;
       stats.fps = 1000 / stats.ms;
@@ -210,7 +208,6 @@
       gl.uniform2f(b.u("R"), w, h);
       gl.uniform1f(b.u("V"), o.view);
       gl.uniform1f(b.u("uGrid"), o.grid || 0);
-      gl.uniform1i(b.u("uDebug"), o.debug);
       for (const k of ["top", "mid", "hor", "sunCol"]) gl.uniform3fv(b.u("u" + k[0].toUpperCase() + k.slice(1)), o.palette[k]);
       fullscreen();
       if (floatOK) drawParticles(o, w, h, scale);
@@ -220,7 +217,6 @@
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.useProgram(P.post.prog);
       bindTex(0, sceneRT.tex, P.post, "uTex");
-      gl.uniform1i(P.post.u("uDebug"), o.debug);
       gl.uniform2f(P.post.u("R"), canvas.width, canvas.height);
       gl.uniform1f(P.post.u("T"), o.t);
       fullscreen();

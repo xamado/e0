@@ -3,7 +3,7 @@
 //
 // Passes, in order: backdrop (palette gradient + optional grid) → simulation step
 // (position/velocity ping-pong textures) → points into a fading trail buffer →
-// composite trails over the backdrop → post (debug heat map, grain) to the screen.
+// composite trails over the backdrop → post (upscale, grain) to the screen.
 
 (() => {
   // Fullscreen triangle
@@ -13,7 +13,7 @@ void main(){ vec2 p = vec2(gl_VertexID == 1 ? 3. : -1., gl_VertexID == 2 ? 3. : 
   // ── Backdrop: palette gradient, grid overlay, sub-screen dimming, vignette ──
   const backdropFS = /* glsl */ `#version 300 es
 precision highp float;
-uniform vec2 R; uniform float V, uGrid; uniform int uDebug;
+uniform vec2 R; uniform float V, uGrid;
 uniform vec3 uTop, uMid, uHor, uSunCol;
 out vec4 O;
 float gridLine(vec2 q){ vec2 g = abs(fract(q - .5) - .5) / max(fwidth(q), vec2(1e-4)); return 1. - clamp(min(g.x, g.y), 0., 1.); }
@@ -21,7 +21,6 @@ void main(){
   vec2 uv = gl_FragCoord.xy / R;
   float y = uv.y + V * .18;
   float grid = gridLine(vec2(uv.x * R.x / R.y, y) * 10.);
-  if (uDebug > 0) { O = vec4(mix(vec3(.03, .04, .07), vec3(.35, .95, 1.), uDebug == 1 ? grid * .25 : 0.), 1.); return; }
   vec3 c = mix(uHor, uMid, smoothstep(0., .55, y));
   c = mix(c, uTop, smoothstep(.4, 1.05, y));
   c = c * c * .45;
@@ -74,7 +73,7 @@ void main(){
   const pointsVS = /* glsl */ `#version 300 es
 precision highp float;
 uniform highp sampler2D uPos, uVel;
-uniform int uN, uColor, uDebug;
+uniform int uN, uColor;
 uniform mat3 uRot;
 uniform float uAsp, uPx, uBright;
 uniform vec2 uShift;
@@ -100,12 +99,7 @@ void main(){
   if (uColor == 1) c = mix(mix(uMid * 1.4, uHor, smoothstep(0., .5, spd)), mix(uSunCol, vec3(1.), .5), smoothstep(.45, 1., spd));
   else if (uColor == 2) c = hue(h * .2 + spd * .45 + depth * .2) * .9 + .1;
   else c = mix(uSunCol, mix(uGlow, uFog, .5), h) * (.65 + .6 * smoothstep(0., 1., spd));
-  float b = uBright * (1.15 - depth * .5);
-  if (uDebug == 4) { c = vec3(.04); b = 1.; }                                   // cost: additive overdraw
-  else if (uDebug == 2) { c = normalize(v + 1e-5) * .5 + .5; b = .5; }          // "normals": velocity direction
-  else if (uDebug == 3) { c = vec3(1. - depth); b = .5; }
-  else if (uDebug == 1) { c = vec3(.35, .95, 1.); b = .4; }
-  vCol = c * b;
+  vCol = c * uBright * (1.15 - depth * .5);
 }`;
   const pointsFS = /* glsl */ `#version 300 es
 precision highp float;
@@ -120,24 +114,19 @@ out vec4 O;
 void main(){ vec3 c = texture(uTex, gl_FragCoord.xy / R).rgb * uDecay; O = vec4(max(c - .001, 0.), 1.); }`;
   const compositeFS = /* glsl */ `#version 300 es
 precision highp float;
-uniform sampler2D uTex; uniform vec2 R; uniform int uDebug;
+uniform sampler2D uTex; uniform vec2 R;
 out vec4 O;
-void main(){ vec3 c = texture(uTex, gl_FragCoord.xy / R).rgb; O = vec4(uDebug == 4 ? c : 1. - exp(-c * 1.3), 1.); }`;
+void main(){ vec3 c = texture(uTex, gl_FragCoord.xy / R).rgb; O = vec4(1. - exp(-c * 1.3), 1.); }`;
 
-  // ── Post: upscale to the screen, cost heat map, grain ──
+  // ── Post: upscale to the screen, grain ──
   const postFS = /* glsl */ `#version 300 es
 precision highp float;
-uniform sampler2D uTex; uniform int uDebug; uniform vec2 R; uniform float T;
+uniform sampler2D uTex; uniform vec2 R; uniform float T;
 out vec4 O;
 float hh(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-vec3 heat(float x){
-  x = clamp(x, 0., 1.);
-  return clamp(vec3(smoothstep(.3, .65, x) + smoothstep(.9, 1., x), smoothstep(.55, .9, x), smoothstep(0., .3, x) * (1. - smoothstep(.35, .6, x)) + smoothstep(.9, 1., x)), 0., 1.) * (.15 + .85 * smoothstep(0., .1, x)) + vec3(.02, .02, .06);
-}
 void main(){
   vec3 c = texture(uTex, gl_FragCoord.xy / R).rgb;
-  if (uDebug == 4) c = heat(c.r);
-  if (uDebug == 0) c += (hh(gl_FragCoord.xy + fract(T) * 100.) - .5) * .03;
+  c += (hh(gl_FragCoord.xy + fract(T) * 100.) - .5) * .03;
   O = vec4(c, 1.);
 }`;
 
