@@ -477,8 +477,7 @@
               `<button class="cell${k === 0 ? " is-active" : ""}" type="button" role="option" data-i="${k}"${r.d.poster ? ` data-poster="${r.d.poster}"` : ""} style="--art:${r.d.art}">
                 <span class="num" aria-hidden="true">${pad2(k + 1)}</span>
                 <span class="stage caps"><span>Stage ${pad2(k + 1)}</span><span>${esc(r.d.tag || r.meta)}</span></span>
-                <span><span class="t">${esc(r.label)}</span><span class="m caps">${esc(r.d.platforms)}</span></span></button>`).join("")}</div>
-            <p class="note">Credits include work at previous studios. All trademarks belong to their respective owners.</p></div>`
+                <span><span class="t">${esc(r.label)}</span><span class="m caps">${esc(r.d.platforms)}</span></span></button>`).join("")}</div></div>`
         : `${head}<div class="rows" role="listbox" aria-label="${esc(t.label)}">${(() => {
             // Optional group labels (e.g. "What we do" / "How we engage"); numbering restarts per group
             let html = "", n = 0, last;
@@ -580,7 +579,7 @@
       b.addEventListener("focus", () => selectMenu(i));
       b.addEventListener("click", () => openSub(i));
     });
-    tabBtns.forEach((b, i) => b.addEventListener("click", () => renderTab(i, i > tabIdx ? 1 : -1)));
+    tabBtns.forEach((b, i) => b.addEventListener("click", () => { if (i !== tabIdx) renderTab(i, i > tabIdx ? 1 : -1); }));
     document.querySelectorAll("[data-tab-step]").forEach((b) => b.addEventListener("click", () => tab(+b.dataset.tabStep)));
     $("#back").addEventListener("click", () => back());
     $("#brand").addEventListener("click", () => back());

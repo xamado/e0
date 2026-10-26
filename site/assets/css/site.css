@@ -219,13 +219,14 @@
 
     /* ── Team: single designed page ─────────────────────────── */
     .tm { height: 100%; overflow-y: auto; overscroll-behavior: contain; display: grid; gap: clamp(64px, 11vh, 130px);
-      padding: 6px 12px 80px 2px; scrollbar-width: thin; scrollbar-color: var(--line) transparent;
-      -webkit-mask-image: linear-gradient(transparent, #000 18px, #000 calc(100% - 48px), transparent); mask-image: linear-gradient(transparent, #000 18px, #000 calc(100% - 48px), transparent); }
+      padding: 0 12px 80px 0; scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+      -webkit-mask-image: linear-gradient(#000 calc(100% - 48px), transparent); mask-image: linear-gradient(#000 calc(100% - 48px), transparent); }
     .tm h3 { text-transform: uppercase; }
     .tm__label { color: var(--dim); margin: 0 0 26px; font-weight: 600; }
 
-    .tm__hero { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: clamp(32px, 5vw, 90px); align-items: end; padding-top: 12px; }
-    body.is-page .pane .tm__headline { font: 700 clamp(52px, 6.6vw, 112px)/.9 var(--cond); letter-spacing: .015em; text-transform: uppercase; margin: 14px 0 0; }
+    .tm__hero { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: clamp(32px, 5vw, 90px); align-items: end; }
+    .tm__hero > div:first-child { display: flex; flex-direction: column; align-self: start; }  /* label lines up with other sections */
+    body.is-page .pane .tm__headline { font: 700 clamp(52px, 6.6vw, 112px)/.9 var(--cond); letter-spacing: .015em; text-transform: uppercase; margin: 10px 0 0; }
     .tm__headline span { display: block; }
     .tm__headline .hl { color: var(--sun); text-shadow: 0 0 60px color-mix(in srgb, var(--sun) 35%, transparent); }
     .tm__lede p:first-child { font-size: clamp(18px, 1.45vw, 21px); line-height: 1.55; color: var(--text); opacity: .86; }
@@ -299,8 +300,6 @@
     .tc { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(32px, 5vw, 80px); height: 100%; min-height: 0; }
     .tc__side { align-self: start; display: flex; flex-direction: column; }  /* same flow as .pane, so the header lines up exactly */
     /* Same header position and size as the list screens (Services, How we work) */
-    body.is-page.is-term .sub__body { padding-top: clamp(28px, 6vh, 64px); }
-    body.is-page.is-term .pane h2 { font-size: clamp(48px, 6vw, 88px); margin: 10px 0 14px; }
     .tc .pane__intro { margin-bottom: 0; max-width: 520px; }
     .tc .term__alt { margin-top: 28px; }
     .term-wrap { display: grid; min-height: 0; padding-bottom: 8px; }
@@ -343,18 +342,22 @@
     }
 
     /* Level select (Shipped) */
-    body.is-grid .sub__body, body.is-page .sub__body { grid-template-columns: 1fr; padding-top: clamp(18px, 3.5vh, 40px); }
-    body.is-grid .pane h2, body.is-page .pane h2 { font-size: clamp(44px, 5vw, 72px); margin: 8px 0 10px; }
+    /* Same header size and position on every section; only the column layout differs */
+    body.is-grid .sub__body, body.is-page .sub__body { grid-template-columns: 1fr; }
     body.is-grid .detail { display: none; }
-    .lvl { display: grid; grid-template-rows: auto 1fr auto; gap: 18px; min-height: 0; height: 100%; }
-    .lvl__head { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px 48px; flex-wrap: wrap; }
-    .lvl__head .pane__intro { margin-bottom: 0; }
+    .lvl { display: grid; grid-template-rows: auto 1fr; gap: 18px; min-height: 0; height: 100%; }
+    .lvl__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px 48px; flex-wrap: wrap; }
+    .lvl__info { align-self: flex-end; }
+    .lvl__head > div:first-child { display: flex; flex-direction: column; }  /* same flow as .pane, so the header lines up with other sections */
+    .lvl__head .pane__intro { margin-bottom: 0; max-width: none; }
     .lvl__info { text-align: right; min-width: 260px; }
     .lvl__info h3 { font-size: clamp(30px, 3vw, 44px); letter-spacing: .05em; margin: 8px 0 10px; }
     .lvl__info .k { color: var(--sun); }
     .lvl__info .m { color: var(--muted); font-size: 16px; }
     /* Poster grid: scrolls vertically inside the screen, like a game library */
-    .lvl__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 300px)); justify-content: center; grid-auto-rows: max-content; gap: 26px 22px;
+    /* Poster width follows the window height so a full row always fits (≈ 300px wide on tall screens) */
+    .lvl__grid { --cw: clamp(170px, calc((100svh - 460px) / 1.5), 300px);
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--cw) * .87), var(--cw))); justify-content: center; grid-auto-rows: max-content; gap: 26px 22px;
       align-content: start; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: 22px 20px 40px; margin: -22px -20px 0; scroll-padding: 30px 0 52px;
       scrollbar-width: thin; scrollbar-color: var(--line) transparent;
       -webkit-mask-image: linear-gradient(transparent, #000 22px, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(transparent, #000 22px, #000 calc(100% - 40px), transparent); }
@@ -380,7 +383,6 @@
     .cell.is-active { transform: translateY(-8px) scale(1.06); z-index: 1; border-color: var(--sun);
       box-shadow: 0 0 0 1px var(--sun), 0 26px 50px -16px rgba(0,0,0,.8), 0 0 50px -10px var(--sun); }
     .cell.is-active .stage { color: var(--sun); }
-    .lvl .note { margin: 0; }
     @media (max-width: 900px) {
       .lvl { height: auto; } .lvl__info { text-align: left; }
       .lvl__grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); overflow: visible; -webkit-mask-image: none; mask-image: none; }
