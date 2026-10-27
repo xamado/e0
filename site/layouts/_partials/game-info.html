@@ -1,0 +1,7 @@
+{{- /* The grid's info corner for one game. main: this is the game's own page, so its title is the h1 */ -}}
+{{- with .page -}}
+<span class="k caps">Stage {{ printf "%02d" (add $.k 1) }} / {{ printf "%02d" $.count }}</span>
+{{ if $.main }}<h1>{{ .Title }}</h1>{{ else }}<h3>{{ .Title }}</h3>{{ end }}
+{{- $m := slice }}{{ range slice .Params.role .Params.platforms .Params.year }}{{ with . }}{{ $m = $m | append . }}{{ end }}{{ end }}
+<p class="m">{{ delimit $m " · " }}</p>
+{{- end -}}

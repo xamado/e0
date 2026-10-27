@@ -1,0 +1,5 @@
+{{- /* Meta description of the home page or a section; front matter description overrides */ -}}
+{{- $d := site.Params.description -}}
+{{- if eq .Kind "section" }}{{ with .Params.intro }}{{ $d = . }}{{ end }}{{ end -}}
+{{- with .Description }}{{ $d = . }}{{ end -}}
+{{- return $d -}}

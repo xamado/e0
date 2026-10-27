@@ -29,6 +29,8 @@
     .shade--sub { opacity: 0; background: linear-gradient(180deg, rgba(14,7,28,.55), rgba(14,7,28,.25) 30%, rgba(14,7,28,.6)); }
     body.is-sub .shade--main { opacity: 0; }
     body.is-sub .shade--sub { opacity: 1; }
+    /* Page load (until app.js is running): no transitions, the page arrives on its screen */
+    .is-boot *, .is-boot *::before, .is-boot *::after { transition: none !important; animation: none !important; }
 
     .screen { position: fixed; inset: 0; z-index: 1; }
     .emblem { position: relative; width: 58px; height: 58px; display: grid; place-items: center; flex: none; }
@@ -71,23 +73,23 @@
     .tagline { color: var(--sun); }
 
     .menu { display: grid; gap: 2px; }
-    .menu button {
+    .menu a {
       position: relative; width: 100%; display: grid; grid-template-columns: 38px 1fr; align-items: baseline;
       padding: 10px 18px 10px 14px; outline: none; isolation: isolate;
       font: 600 clamp(24px, 2.6vw, 34px)/1.1 var(--cond); letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
       transition: color .2s, padding .25s var(--ease);
     }
     .menu .n { font: 600 13px/1 var(--cond); letter-spacing: .1em; color: var(--dim); transition: color .2s; }
-    .menu button::after {
+    .menu a::after {
       content: ""; position: absolute; inset: 0; z-index: -1;
       background: linear-gradient(90deg, rgba(255,201,120,.24), rgba(255,122,89,.06) 70%, transparent);
       border-left: 2px solid var(--sun); transform: scaleX(0); transform-origin: left; transition: transform .3s var(--ease);
     }
     .menu small { grid-column: 2; display: block; max-height: 0; overflow: hidden; opacity: 0; font: 400 15px/1.4 var(--sans); letter-spacing: 0; text-transform: none; color: var(--muted); transition: opacity .2s, max-height .25s, margin .25s; }
-    .menu button.is-active { color: var(--text); padding-left: 22px; }
-    .menu button.is-active .n { color: var(--sun); }
-    .menu button.is-active::after { transform: scaleX(1); }
-    .menu button.is-active small { max-height: 3em; margin-top: 6px; opacity: 1; }
+    .menu a.is-active { color: var(--text); padding-left: 22px; }
+    .menu a.is-active .n { color: var(--sun); }
+    .menu a.is-active::after { transform: scaleX(1); }
+    .menu a.is-active small { max-height: 3em; margin-top: 6px; opacity: 1; }
 
     /* Footers: copyright centred, key hints on the right (same on every screen) */
     .bar, .sub__foot { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 24px; }
@@ -136,7 +138,7 @@
     .sub__body { display: grid; grid-template-columns: minmax(300px, .85fr) 1.3fr; gap: clamp(28px, 5vw, 80px); padding: clamp(28px, 6vh, 64px) var(--gutter) 24px; min-height: 0; overflow: hidden; }
     .pane { min-height: 0; display: flex; flex-direction: column; }
     .pane__kicker { color: var(--sun); }
-    .pane h2 { font-size: clamp(48px, 6vw, 88px); letter-spacing: .06em; margin: 10px 0 14px; }
+    .pane h1, .pane h2 { font-size: clamp(48px, 6vw, 88px); letter-spacing: .06em; margin: 10px 0 14px; }
     .pane__intro { color: var(--muted); max-width: 420px; margin-bottom: 28px; }
     .rows { display: grid; gap: 2px; overflow-y: auto; padding-right: 6px; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
     .row {
@@ -159,7 +161,7 @@
     .detail { position: relative; align-self: start; background: var(--glass); backdrop-filter: blur(18px) saturate(1.2); border: 1px solid var(--line); padding: clamp(24px, 3.5vw, 44px); min-height: min(520px, 100%); max-height: 100%; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
     .detail::before { content: ""; position: absolute; left: 0; top: 0; width: 64px; height: 2px; background: var(--sun); }
     .detail__k { color: var(--sun); }
-    .detail h3 { font-size: clamp(34px, 3.6vw, 52px); letter-spacing: .05em; margin: 12px 0 18px; }
+    .detail h1, .detail h3 { font-size: clamp(34px, 3.6vw, 52px); letter-spacing: .05em; margin: 12px 0 18px; }
     .detail p { color: var(--muted); max-width: 600px; font-size: 17.5px; }
     .detail p + p { margin-top: 12px; }
     .detail .facts { display: grid; grid-template-columns: auto 1fr; gap: 10px 26px; margin-top: 26px; padding-top: 22px; border-top: 1px solid var(--line); }
@@ -351,7 +353,7 @@
     .lvl__head > div:first-child { display: flex; flex-direction: column; }  /* same flow as .pane, so the header lines up with other sections */
     .lvl__head .pane__intro { margin-bottom: 0; max-width: none; }
     .lvl__info { text-align: right; min-width: 260px; }
-    .lvl__info h3 { font-size: clamp(30px, 3vw, 44px); letter-spacing: .05em; margin: 8px 0 10px; }
+    .lvl__info h1, .lvl__info h3 { font-size: clamp(30px, 3vw, 44px); letter-spacing: .05em; margin: 8px 0 10px; }
     .lvl__info .k { color: var(--sun); }
     .lvl__info .m { color: var(--muted); font-size: 16px; }
     /* Poster grid: scrolls vertically inside the screen, like a game library */
@@ -479,5 +481,6 @@
       .lockup { margin-bottom: 24px; gap: 8px; }
       .lockup .emblem { width: 46px; height: 46px; }
       .lockup .logo { font-size: clamp(38px, 5vw, 68px); margin-top: 4px; }
-      .menu button { padding-top: 6px; padding-bottom: 6px; font-size: clamp(21px, 2.2vw, 28px); }
+      .menu a { padding-top: 6px; padding-bottom: 6px; font-size: clamp(21px, 2.2vw, 28px); }
     }
+

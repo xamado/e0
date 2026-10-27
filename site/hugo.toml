@@ -2,8 +2,8 @@ baseURL = "https://event-0.com/"
 locale = "en"
 title = "Event Zero — AAA Engineering & Co-Development"
 
-# The whole site is one page (the main menu). Section and item pages exist only as
-# content for that page, so nothing else is rendered; see cascade in content/_index.md.
+# Every section gets its own page (own URL, title and plain-HTML copy for search engines), all sharing the
+# main-menu shell in layouts/all.html; the menu opens on whichever page you land on. Items have no pages.
 disableKinds = ["taxonomy", "term", "rss"]
 
 [params]

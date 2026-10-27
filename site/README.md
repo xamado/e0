@@ -1,7 +1,10 @@
 # Event Zero site
 
 Static site built with [Hugo](https://gohugo.io). All copy lives in Markdown under `content/`;
-the main-menu design is the template in `layouts/home.html` (no external theme).
+the main-menu design is the one template `layouts/all.html` (no external theme). Every section
+is its own page (`/services/`, `/shipped/`…) that arrives with its screen rendered (`layouts/_partials/pane.html`),
+including every item's text; items are selections on that screen, not pages. Switching tabs swaps in the other
+sections' screens, fetched from their pages.
 
 ## Commands
 
@@ -24,5 +27,5 @@ Each menu entry is a folder in `content/`, ordered by `weight` in its `_index.md
 - `assets/css/site.css`: styles
 - `assets/js/shaders.js`, `engine.js`: WebGL2 background (Lorenz attractor particles, backdrop, trails)
 - `assets/js/raycaster.js`: the hidden ASCII game in the contact terminal (`./do-not-run`)
-- `assets/js/app.js`: menu, input, sounds and scene lab; reads the compiled content from
-  `<script id="site-data">` in the page
+- `assets/js/app.js`: menu, input, sounds and scene lab; takes the site's structure (sections, page URLs) from
+  `<script id="site-data">` in the page and each section's screen from its page

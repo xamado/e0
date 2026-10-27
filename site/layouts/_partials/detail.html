@@ -1,0 +1,9 @@
+{{- /* What the detail panel shows for one item (list sections). main: this is the item's own page, so its title is the h1 */ -}}
+{{- with .page -}}
+<span class="detail__k caps">{{ .Params.kicker }}</span>
+{{ if $.main }}<h1>{{ .Title }}</h1>{{ else }}<h3>{{ .Title }}</h3>{{ end }}
+{{ .Content }}
+{{- with .Params.bullets }}<ul class="bul">{{ range . }}<li>{{ . }}</li>{{ end }}</ul>{{ end }}
+{{- with .Params.facts }}<dl class="facts">{{ range . }}<dt>{{ .label }}</dt><dd>{{ .value }}</dd>{{ end }}</dl>{{ end }}
+{{- with .Params.tags }}<ul class="tags">{{ range . }}<li>{{ . }}</li>{{ end }}</ul>{{ end }}
+{{- end -}}

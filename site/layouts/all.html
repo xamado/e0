@@ -3,10 +3,23 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ site.Title }}</title>
-  <meta name="description" content="{{ site.Params.description }}">
-  <meta property="og:title" content="{{ site.Title }}">
-  <meta property="og:description" content="{{ site.Params.description }}">
+  {{- /* Every page (home, each section) is this same main-menu shell, arriving on its own screen: a section's page
+       has its screen rendered (_partials/pane.html) and opens on it. Items have no pages. See README. */}}
+  {{- $home := site.Home }}
+  {{- $sections := $home.Sections.ByWeight }}
+  {{- $sec := false }}{{ $n := -1 }}
+  {{- if .IsSection }}{{ $sec = . }}{{ end }}
+  {{- with $sec }}
+    {{- range $k, $s := $sections }}{{ if eq $s.RelPermalink $sec.RelPermalink }}{{ $n = $k }}{{ end }}{{ end }}
+  {{- end }}
+  {{- $layout := "" }}{{ with $sec }}{{ $layout = .Params.display | default "list" }}{{ end }}
+  {{- $title := partial "page-title.html" . }}
+  {{- $desc := partial "page-description.html" . }}
+  <title>{{ $title }}</title>
+  <meta name="description" content="{{ $desc }}">
+  <link rel="canonical" href="{{ .Permalink }}">
+  <meta property="og:title" content="{{ $title }}">
+  <meta property="og:description" content="{{ $desc }}">
   <meta property="og:type" content="website">
   <meta property="og:url" content="{{ .Permalink }}">
   <link rel="icon" href="{{ "favicon.svg" | relURL }}" type="image/svg+xml">
@@ -16,7 +29,8 @@
   {{- $css := resources.Get "css/site.css" | minify | fingerprint }}
   <link rel="stylesheet" href="{{ $css.RelPermalink }}" integrity="{{ $css.Data.Integrity }}">
 </head>
-<body class="is-splash">
+{{- /* is-boot: no transitions until app.js is running (it lifts it) */}}
+<body class="{{ if $sec }}is-sub{{ if eq $layout "grid" }} is-grid{{ else if in (slice "team" "terminal") $layout }} is-page{{ end }}{{ if eq $layout "terminal" }} is-term{{ end }}{{ else }}is-splash{{ end }} is-boot">
   <canvas id="sky" aria-hidden="true"></canvas>
   <div class="shade shade--main"></div>
   <div class="shade shade--sub"></div>
@@ -25,9 +39,9 @@
   <section class="screen splash" id="splash" aria-label="Title screen">
     <div class="splash__inner">
       <div class="emblem"><span>e0</span></div>
-      <h1 class="logo">Event Zero</h1>
-      <p class="tagline caps">{{ .Params.tagline }}</p>
-      <p class="press caps">{{ .Params.press }}</p>
+      {{ if .IsHome }}<h1 class="logo">Event Zero</h1>{{ else }}<div class="logo">Event Zero</div>{{ end }}
+      <p class="tagline caps">{{ site.Home.Params.tagline }}</p>
+      <p class="press caps">{{ site.Home.Params.press }}</p>
     </div>
     <p class="splash__foot caps"><span class="copy hint">© <span class="year">{{ now.Year }}</span> Event Zero</span></p>
   </section>
@@ -37,12 +51,16 @@
     <div class="main__title">
       <div class="lockup">
         <div class="emblem stag" style="--i:0"><span>e0</span></div>
-        <h1 class="logo stag" style="--i:1">Event Zero</h1>
-        <p class="tagline caps stag" style="--i:2">{{ .Params.tagline }}</p>
+        <div class="logo stag" style="--i:1">Event Zero</div>
+        <p class="tagline caps stag" style="--i:2">{{ site.Home.Params.tagline }}</p>
       </div>
-      <nav aria-label="Main menu"><ul class="menu" id="menu"></ul></nav>
+      <nav aria-label="Main menu"><ul class="menu" id="menu">
+        {{- range $k, $s := $sections }}
+        <li class="stag" style="--i:{{ add $k 3 }}"><a href="{{ $s.RelPermalink }}" data-i="{{ $k }}"><span class="n">{{ printf "%02d" (add $k 1) }}</span><span>{{ $s.Title }}</span></a></li>
+        {{- end }}
+      </ul></nav>
     </div>
-    <aside class="scene-cap stag" style="--i:10" id="scene-cap" aria-live="polite"><b class="caps" id="scene-cap-t"></b><span id="scene-cap-d"></span></aside>
+    <aside class="scene-cap stag" style="--i:10" id="scene-cap" aria-live="polite">{{ with $home.Params.caption }}<b class="caps" id="scene-cap-t">{{ .title }}</b><span id="scene-cap-d">{{ replace .text "{count}" "262,144" }}</span>{{ end }}</aside>
     <footer class="bar caps stag" style="--i:9">
       <span class="copy hint">© <span class="year">{{ now.Year }}</span> Event Zero</span>
       <div class="hints hints--keys">
@@ -58,21 +76,27 @@
       <button class="brand" type="button" id="brand" aria-label="Event Zero, back to main menu"><span class="emblem emblem--sm"><span>e0</span></span>Event Zero</button>
       <div class="tabs">
         <button class="bumper" type="button" data-tab-step="-1" aria-label="Previous tab"><span class="glyph glyph--bumper"><span data-kb>Q</span><span data-pad>LB</span></span></button>
-        <div role="tablist" id="tabs"></div>
+        <div role="tablist" id="tabs">
+          {{- range $k, $s := $sections }}<a class="tab" role="tab" href="{{ $s.RelPermalink }}" data-i="{{ $k }}" aria-selected="{{ eq $k $n }}">{{ $s.Title }}</a>{{ end -}}
+        </div>
         <button class="bumper" type="button" data-tab-step="1" aria-label="Next tab"><span class="glyph glyph--bumper"><span data-kb>E</span><span data-pad>RB</span></span></button>
       </div>
-      <span class="sub__meta caps" id="sub-meta">01 / 05</span>
+      <span class="sub__meta caps" id="sub-meta">{{ printf "%02d / %02d" (add (cond (ge $n 0) $n 0) 1) (len $sections) }}</span>
     </header>
 
     <div class="sub__body">
-      <div class="pane" id="pane"></div>
-      <article class="detail" id="detail" aria-live="polite"></article>
+      <div class="pane" id="pane"{{ with $sec }} data-section="{{ .Section }}"{{ end }}>
+        {{- with $sec }}{{ partial "pane.html" (dict "sec" . "n" $n) }}{{ end }}
+      </div>
+      <article class="detail" id="detail" aria-live="polite">
+        {{- if eq $layout "list" }}{{ with index $sec.Pages.ByWeight 0 }}{{ partial "detail.html" (dict "page" . "main" false) }}{{ end }}{{ end -}}
+      </article>
     </div>
 
     <footer class="sub__foot caps">
       <span class="copy hint">© <span class="year">{{ now.Year }}</span> Event Zero</span>
       <div class="hints">
-        <span class="hint hint--kbonly"><span class="glyph"><span data-kb id="nav-kb">↑↓</span><span data-pad>✥</span></span>Navigate</span>
+        <span class="hint hint--kbonly"><span class="glyph"><span data-kb id="nav-kb">{{ if eq $layout "grid" }}↑↓←→{{ else }}↑↓{{ end }}</span><span data-pad>✥</span></span>Navigate</span>
         <span class="hint hint--kbonly"><span class="glyph glyph--a"><span data-kb>Enter</span><span data-pad>A</span></span>Select</span>
         <button class="hint" type="button" id="back"><span class="glyph glyph--b"><span data-kb>Esc</span><span data-pad>B</span></span>Back</button>
       </div>
@@ -133,117 +157,21 @@
 
 
 
-  {{- /* Menu content compiled from the Markdown files in content/. Read by assets/js/app.js. */ -}}
+  {{- /* Site structure for assets/js/app.js: sections, their pages and URLs. The content itself is in the pages. */ -}}
   {{- $email := site.Params.email -}}
   {{- $tabs := slice -}}
-  {{- range .Sections.ByWeight -}}
-    {{- $sec := . -}}
-    {{- $rows := slice -}}
-    {{- range .Pages.ByWeight -}}
-      {{- $d := dict "body" (.Plain | htmlUnescape | strings.TrimSpace) "bodyHtml" (.Content | string | strings.TrimSpace) -}}
-      {{- with .Params.kicker }}{{ $d = merge $d (dict "k" .) }}{{ end -}}
-      {{- with .Params.variant }}{{ $d = merge $d (dict "type" .) }}{{ end -}}
-      {{- with .Params.bullets }}{{ $d = merge $d (dict "bul" .) }}{{ end -}}
-      {{- with .Params.tags }}{{ $d = merge $d (dict "tags" .) }}{{ end -}}
-      {{- with .Params.facts }}{{ $d = merge $d (dict "facts" .) }}{{ end -}}
-      {{- with .Params.action }}{{ $d = merge $d (dict "action" .) }}{{ end -}}
-      {{- with .Params.logos -}}
-        {{- /* Logo groups; icons are inlined from assets/logos/<icon>.svg, no icon = text tile */ -}}
-        {{- $groups := slice -}}
-        {{- range . -}}
-          {{- $items := slice -}}
-          {{- range .items -}}
-            {{- $it := dict "name" .name -}}
-            {{- with .icon }}{{ with resources.Get (printf "logos/%s.svg" .) }}{{ $it = merge $it (dict "svg" .Content) }}{{ end }}{{ end -}}
-            {{- $items = $items | append $it -}}
-          {{- end -}}
-          {{- $groups = $groups | append (dict "group" .group "items" $items) -}}
-        {{- end -}}
-        {{- $d = merge $d (dict "logos" $groups) -}}
-      {{- end -}}
-      {{- $meta := .Params.meta -}}
-      {{- if eq $sec.Params.itemType "game" -}}
-        {{- $meta = .Params.year -}}
-        {{- $d = merge $d (dict "type" "game" "role" (.Params.role | default "") "platforms" .Params.platforms "art" .Params.art) -}}
-        {{- with .Params.tag }}{{ $d = merge $d (dict "tag" .) }}{{ end -}}
-        {{- with .Resources.GetMatch "poster.*" -}}
-          {{- /* Any press-kit image works: cropped to 2:3 and converted to WebP at build time */ -}}
-          {{- $d = merge $d (dict "poster" (.Fill "480x720 center webp").RelPermalink) -}}
-        {{- end -}}
-      {{- else if eq $sec.Params.itemType "client" -}}
-        {{- $d = merge $d (dict "type" "client") -}}
-      {{- end -}}
-      {{- $row := dict "label" .Title "meta" $meta "d" $d -}}
-      {{- with .Params.href }}{{ $row = merge $row (dict "href" (replace . "{email}" $email)) }}{{ end -}}
-      {{- with .Params.group }}{{ $row = merge $row (dict "group" .) }}{{ end -}}
-      {{- $rows = $rows | append $row -}}
-    {{- end -}}
-    {{- $tab := dict "id" .Section "label" .Title "blurb" .Params.blurb "intro" .Params.intro "rows" $rows -}}
-    {{- with .Params.display }}{{ $tab = merge $tab (dict "layout" .) }}{{ end -}}
+  {{- range $sections -}}
+    {{- $tab := dict "id" .Section "url" .RelPermalink "title" (partial "page-title.html" .) "layout" (.Params.display | default "list") "items" (len .Pages) -}}
     {{- if eq .Params.display "terminal" -}}
       {{- $banner := slice -}}
       {{- range .Params.banner }}{{ $banner = $banner | append (replace . "{email}" $email) }}{{ end -}}
       {{- $tab = merge $tab (dict "terminal" (dict "banner" $banner "readme" .Params.readme "tips" .Params.tips "endpoint" (site.Params.contactEndpoint | default "") "key" (site.Params.contactKey | default ""))) -}}
     {{- end -}}
-    {{- if eq .Params.display "team" -}}
-      {{- /* Team is a single designed page: all its content lives in team/_index.md */ -}}
-      {{- $logos := slice -}}
-      {{- range .Params.logos -}}
-        {{- $items := slice -}}
-        {{- range .items -}}
-          {{- $it := dict "name" .name -}}
-          {{- with .icon }}{{ with resources.Get (printf "logos/%s.svg" .) }}{{ $it = merge $it (dict "svg" .Content) }}{{ end }}{{ end -}}
-          {{- $items = $items | append $it -}}
-        {{- end -}}
-        {{- $logos = $logos | append (dict "group" .group "items" $items) -}}
-      {{- end -}}
-      {{- $tab = merge $tab (dict "team" (dict
-        "headline" .Params.headline "lede" .Params.lede "pillars" .Params.pillars
-        "erasTitle" .Params.eras_title "eras" .Params.eras "location" .Params.location
-        "story" (.Content | string) "logosTitle" .Params.logos_title "logos" $logos "cta" .Params.cta)) -}}
-    {{- end -}}
     {{- $tabs = $tabs | append $tab -}}
   {{- end }}
-  <script type="application/json" id="site-data">{{ dict "email" $email "tabs" $tabs "caption" (.Params.caption | default dict) | jsonify | safeJS }}</script>
-
-  {{- /* Plain version of the same content for visitors without JavaScript and for crawlers */}}
-  <noscript>
-    <style>body{overflow:auto}#sky,.shade,.screen,.tools,.sweep,.lab{display:none!important}.nojs{max-width:760px;margin:0 auto;padding:48px 20px}.nojs h2{margin:48px 0 8px}.nojs h3{margin:28px 0 6px;font-size:22px}.nojs a{color:var(--sun)}</style>
-    <main class="nojs">
-      <h1>{{ .Title }}</h1>
-      <p>{{ .Params.tagline }} · <a href="mailto:{{ $email }}">{{ $email }}</a></p>
-      {{- range .Sections.ByWeight }}
-      <section id="{{ .Section }}">
-        <h2>{{ .Title }}</h2>
-        {{ with .Params.intro }}<p>{{ . }}</p>{{ end }}
-        {{- if eq .Params.display "terminal" }}
-        <p><a href="mailto:{{ $email }}">{{ $email }}</a></p>
-        {{- end }}
-        {{- if eq .Params.display "team" }}
-        <p>{{ delimit .Params.headline " " }}</p>
-        <p>{{ .Params.lede }}</p>
-        {{ range .Params.pillars }}<h3>{{ .title }}</h3><p>{{ .text }}</p>{{ end }}
-        <h3>{{ .Params.eras_title }}</h3>
-        <ul>{{ range .Params.eras }}<li>{{ .label }}: {{ .text }}</li>{{ end }}</ul>
-        {{ .Content }}
-        <p>{{ .Params.location.city }}, {{ .Params.location.country }}. {{ .Params.location.note }}</p>
-        {{ range .Params.logos }}<p>{{ .group }}: {{ range $i, $l := .items }}{{ if $i }}, {{ end }}{{ $l.name }}{{ end }}</p>{{ end }}
-        {{- end }}
-        {{- range .Pages.ByWeight }}
-        {{ with .Params.group }}<h3>{{ . }}</h3>{{ end }}
-        <article>
-          <h3>{{ .Title }}</h3>
-          {{ with .Params.platforms }}<p>{{ . }}</p>{{ end }}
-          {{ .Content }}
-          {{ with .Params.bullets }}<ul>{{ range . }}<li>{{ . }}</li>{{ end }}</ul>{{ end }}
-          {{ with .Params.facts }}<dl>{{ range . }}<dt>{{ .label }}</dt><dd>{{ .value }}</dd>{{ end }}</dl>{{ end }}
-          {{ with .Params.logos }}<ul>{{ range . }}<li>{{ .group }}: {{ range $i, $x := .items }}{{ if $i }}, {{ end }}{{ $x.name }}{{ end }}</li>{{ end }}</ul>{{ end }}
-        </article>
-        {{- end }}
-      </section>
-      {{- end }}
-    </main>
-  </noscript>
+  <script type="application/json" id="site-data">{{ dict "email" $email "tabs" $tabs "caption" ($home.Params.caption | default dict) "home" $home.RelPermalink "title" (partial "page-title.html" $home) | jsonify | safeJS }}</script>
+  {{- /* Without JavaScript the pages still work: the menu links straight to them */}}
+  <noscript><style>#sky,.tools,.lab,.splash{display:none!important}body{overflow:auto}body.is-splash .main{pointer-events:auto}body.is-splash .main .stag{opacity:1;transform:none}</style></noscript>
 
   {{- $js := slice (resources.Get "js/shaders.js") (resources.Get "js/engine.js") (resources.Get "js/raycaster.js") (resources.Get "js/app.js") | resources.Concat "js/site.js" | minify | fingerprint }}
   <script src="{{ $js.RelPermalink }}" integrity="{{ $js.Data.Integrity }}"></script>

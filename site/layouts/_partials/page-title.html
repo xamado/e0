@@ -1,0 +1,5 @@
+{{- /* <title> of the home page or a section; front matter seo_title overrides */ -}}
+{{- $t := site.Title -}}
+{{- if eq .Kind "section" }}{{ $t = printf "%s · %s" .Title site.Home.Title }}{{ end -}}
+{{- with .Params.seo_title }}{{ $t = . }}{{ end -}}
+{{- return $t -}}

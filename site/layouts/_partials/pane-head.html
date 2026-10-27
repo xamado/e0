@@ -1,0 +1,4 @@
+{{- /* Kicker, title and intro of a section screen. main: this is the section's own page, so its title is the h1 */ -}}
+<span class="pane__kicker caps">{{ printf "%02d" (add .n 1) }} / {{ .sec.Title }}</span>
+{{ if .main }}<h1>{{ .sec.Title }}</h1>{{ else }}<h2>{{ .sec.Title }}</h2>{{ end }}
+<p class="pane__intro">{{ .sec.Params.intro }}</p>

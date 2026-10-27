@@ -1,0 +1,115 @@
+{{- /*
+  The screen of one section, exactly as its page shows it. app.js takes this markup from each section's page when
+  you switch tabs, so every layout lives here and nowhere else.
+  sec: the section · n: its position in the menu
+  Items have no pages of their own: each one's detail is a hidden block here, shown on hover/selection, so the
+  section's page carries all its items' text.
+*/ -}}
+{{- $sec := .sec }}{{ $n := .n }}
+{{- $active := 0 }}
+{{- $items := $sec.Pages.ByWeight }}
+{{- $head := dict "sec" $sec "n" $n "main" true }}
+{{- $layout := $sec.Params.display | default "list" }}
+
+{{- if eq $layout "grid" }}
+<div class="lvl">
+  <div class="lvl__head"><div>{{ partial "pane-head.html" $head }}</div>
+    <div class="lvl__info" id="lvl-info" aria-live="polite">{{ with index $items $active }}{{ partial "game-info.html" (dict "page" . "k" $active "count" (len $items) "main" false) }}{{ end }}</div></div>
+  <div class="lvl__grid has-active" role="listbox" aria-label="{{ $sec.Title }}">
+    {{- range $k, $p := $items }}
+    {{- $style := printf "--art:%s" $p.Params.art }}
+    {{- $poster := $p.Resources.GetMatch "poster.*" }}
+    {{- with $poster }}{{ $style = printf "%s;--poster:url(%q)" $style (.Fill "480x720 center webp").RelPermalink }}{{ end }}
+    <button type="button" class="cell{{ if $poster }} has-poster{{ end }}{{ if eq $k $active }} is-active{{ end }}" role="option" data-i="{{ $k }}" style="{{ $style | safeCSS }}">
+      <span class="num" aria-hidden="true">{{ printf "%02d" (add $k 1) }}</span>
+      <span class="stage caps"><span>Stage {{ printf "%02d" (add $k 1) }}</span><span>{{ $p.Params.tag | default $p.Params.year }}</span></span>
+      <span><span class="t">{{ $p.Title }}</span><span class="m caps">{{ $p.Params.platforms }}</span></span></button>
+    <div hidden data-detail="{{ $k }}">{{ partial "game-info.html" (dict "page" $p "k" $k "count" (len $items) "main" false) }}</div>
+    {{- end }}
+  </div>
+</div>
+
+{{- else if eq $layout "team" }}
+{{- with $sec }}
+{{- $L := .Params.location }}
+<div class="tm">
+  <header class="tm__hero">
+    <div>
+      <span class="pane__kicker caps">{{ printf "%02d" (add $n 1) }} / {{ .Title }}</span>
+      {{- $last := sub (len .Params.headline) 1 }}
+      <h1 class="tm__headline">{{ range $i, $l := .Params.headline }}<span{{ if eq $i $last }} class="hl"{{ end }}>{{ $l }}</span>{{ end }}</h1>
+    </div>
+    <div class="tm__lede">
+      <p>{{ .Params.lede }}</p>
+      <p class="tm__live caps"><i></i>{{ $L.city }} · <span data-clock="{{ $L.timezone }}">--:--</span> local</p>
+    </div>
+  </header>
+
+  <section class="tm__pillars">
+    {{- range $i, $p := .Params.pillars }}
+    <article><span class="tm__num" aria-hidden="true">{{ printf "%02d" (add $i 1) }}</span><h3>{{ $p.title }}</h3><p>{{ $p.text }}</p></article>
+    {{- end }}
+  </section>
+
+  <section class="tm__eras">
+    <h3 class="tm__label caps">{{ .Params.eras_title }}</h3>
+    {{- $lastEra := sub (len .Params.eras) 1 }}
+    <ol>{{ range $i, $e := .Params.eras }}<li{{ if eq $i $lastEra }} class="now"{{ end }}><i></i><b>{{ $e.label }}</b><span>{{ $e.text }}</span></li>{{ end }}</ol>
+  </section>
+
+  <section class="tm__story">
+    <blockquote>{{ .Content }}</blockquote>
+    <div class="tm__place">
+      <h3>{{ $L.city }}</h3>
+      <p class="caps">{{ $L.country }} · {{ $L.coords }}</p>
+      {{- /* UTC−11 … UTC+12; the hours that overlap the Americas and Europe are lit */}}
+      {{- $utc := printf "UTC%s%d" (cond (ge $L.utc 0) "+" "−") (int (math.Abs $L.utc)) }}
+      <div class="tm__tz" aria-label="Time zones, home base {{ $utc }}">{{ range seq -11 12 }}<i class="{{ if eq . $L.utc }}home{{ else if and (ge . -8) (le . 2) }}near{{ end }}" title="UTC{{ if ge . 0 }}+{{ else }}−{{ end }}{{ int (math.Abs .) }}"></i>{{ end }}</div>
+      <div class="tm__tzlabels caps"><span>Americas</span><span>{{ $utc }}</span><span>Europe</span></div>
+      <p class="tm__note">{{ $L.note }}</p>
+    </div>
+  </section>
+
+  <section class="tm__logos">
+    <h3 class="tm__label caps">{{ .Params.logos_title }}</h3>
+    {{- /* icon: single-colour SVG in assets/logos/, inlined; no icon = text tile */}}
+    {{- range .Params.logos }}
+    <ul aria-label="{{ .group }}">{{ range .items }}<li title="{{ .name }}">{{ with and .icon (resources.Get (printf "logos/%s.svg" .icon)) }}{{ .Content | safeHTML }}{{ else }}<span>{{ .name }}</span>{{ end }}</li>{{ end }}</ul>
+    {{- end }}
+  </section>
+
+  {{- with .Params.cta }}
+  <footer class="tm__cta"><h3>{{ .title }}</h3><a class="tm__btn" href="{{ with site.GetPage "/contact" }}{{ .RelPermalink }}{{ end }}" data-goto="contact">{{ .button }} <span aria-hidden="true">▶</span></a></footer>
+  {{- end }}
+</div>
+{{- end }}
+
+{{- else if eq $layout "terminal" }}
+{{- $email := site.Params.email }}
+<div class="tc">
+  <div class="tc__side">{{ partial "pane-head.html" $head }}<p class="term__alt">No terminal person? Email us at <a href="mailto:{{ $email }}">{{ $email }}</a></p></div>
+  {{- /* Contact terminal: app.js runs it (name → email → company → message → send) */}}
+  <div class="term-wrap">
+    <div class="term" role="region" aria-label="Contact terminal">
+      <div class="term__bar"><i></i><i></i><i></i><span>guest@event-0: ~/contact</span></div>
+      <div class="term__body">
+        <div class="term__out" aria-live="polite"></div>
+        <label class="term__line"><span class="term__prompt"></span><input class="term__in" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Terminal input"></label>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{- else }}
+{{- partial "pane-head.html" $head }}
+<div class="rows" role="listbox" aria-label="{{ $sec.Title }}">
+  {{- /* Optional group labels (e.g. "What we do" / "How we engage"); numbering restarts per group */}}
+  {{- $group := "" }}{{ $num := 0 }}
+  {{- range $k, $p := $items }}
+  {{- with $p.Params.group }}{{ if ne . $group }}{{ $group = . }}{{ $num = 0 }}<p class="rows__group caps" role="presentation">{{ . }}</p>{{ end }}{{ end }}
+  {{- $num = add $num 1 }}
+  <button type="button" class="row{{ if eq $k $active }} is-active{{ end }}" role="option" data-i="{{ $k }}"><span class="n">{{ printf "%02d" $num }}</span><span class="label">{{ $p.Title }}</span><span class="meta">{{ $p.Params.meta }}</span></button>
+  <div hidden data-detail="{{ $k }}">{{ partial "detail.html" (dict "page" $p "main" false) }}</div>
+  {{- end }}
+</div>
+{{- end }}

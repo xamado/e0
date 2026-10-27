@@ -1,6 +1,7 @@
   (() => {
-    // ── Content ───────────────────────────────────────────
-    // Compiled by Hugo from content/**/*.md into <script id="site-data"> (see layouts/home.html).
+    // ── Structure ─────────────────────────────────────────
+    // Sections and their page URLs, from <script id="site-data"> (layouts/all.html). Each page arrives with its own
+    // section's screen already rendered; the other sections' screens are taken from their pages (see Sections below).
     const DATA = JSON.parse(document.getElementById("site-data").textContent);
     const EMAIL = DATA.email;
     const TABS = DATA.tabs;
@@ -10,15 +11,14 @@
     const narrow = matchMedia("(max-width: 900px)");
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const body = document.body;
-    const menuEl = $("#menu"), tabsEl = $("#tabs"), pane = $("#pane"), detail = $("#detail"), desc = document.createElement("span"),  /* footer description removed; kept as a no-op target */ meta = $("#sub-meta"), sweep = $("#sweep");
+    const menuEl = $("#menu"), tabsEl = $("#tabs"), pane = $("#pane"), detail = $("#detail"), meta = $("#sub-meta"), sweep = $("#sweep");
     document.querySelectorAll(".year").forEach((y) => (y.textContent = new Date().getFullYear()));
     const pad2 = (n) => String(n).padStart(2, "0");
-    const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    // Menu entries and tabs are real links to their pages: a plain click stays in the menu,
+    // a middle/modified click opens the page as usual
+    const plainClick = (e) => !(e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey);
 
-    menuEl.innerHTML = TABS.map((t, i) =>
-      `<li class="stag" style="--i:${i + 3}"><button type="button" data-i="${i}"><span class="n">0${i + 1}</span><span>${esc(t.label)}</span></button></li>`).join("");
-    tabsEl.innerHTML = TABS.map((t, i) => `<button class="tab" role="tab" type="button" data-i="${i}">${esc(t.label)}</button>`).join("");
-    const menuBtns = [...menuEl.querySelectorAll("button")];
+    const menuBtns = [...menuEl.querySelectorAll("a")];
     const tabBtns = [...tabsEl.querySelectorAll(".tab")];
 
     // ── Persistence (per-viewer convenience only) ────────
@@ -117,20 +117,36 @@
 
     // ── State ────────────────────────────────────────────
     let state = "splash", menuIdx = 0, tabIdx = 0, rowIdx = 0, pushed = false;
-    const setState = (s) => {
+    // instant: no sound, sweep or easing (a page that was loaded directly just appears)
+    const setState = (s, instant) => {
       const from = state;
       state = s;
-      if (from === "splash" && s === "menu") Sound.play("start");
-      else if (s === "sub" && from !== "sub") Sound.play("select");
-      else if (from !== s && from !== "splash") Sound.play("back");
+      if (!instant) {
+        if (from === "splash" && s === "menu") Sound.play("start");
+        else if (s === "sub" && from !== "sub") Sound.play("select");
+        else if (from !== s && from !== "splash") Sound.play("back");
+      }
       body.classList.toggle("is-splash", s === "splash");
       body.classList.toggle("is-menu", s === "menu");
       body.classList.toggle("is-sub", s === "sub");
       view.target = s === "sub" ? 1 : 0;
-      sweep.classList.remove("go"); void sweep.offsetWidth; sweep.classList.add("go");
+      if (instant) view.v = view.target;
+      else { sweep.classList.remove("go"); void sweep.offsetWidth; sweep.classList.add("go"); }
       applyScene();
     };
     const anim = (el, cls) => { el.classList.remove("swap-l", "swap-r", "swap-f"); void el.offsetWidth; el.classList.add(cls); };
+
+    // ── URLs: every section has its own page (layouts/), the address bar follows the screen ──
+    function syncUrl(push) {
+      const t = TABS[tabIdx];
+      const at = state !== "sub" ? DATA : t;
+      const url = at.url || DATA.home;
+      document.title = at.title;
+      if (push) history.pushState({ sub: t.id }, "", url);
+      else if (location.pathname !== url || location.hash) history.replaceState(state === "sub" ? { sub: t.id } : null, "", url);
+    }
+    // Page path → section index, or -1 for the home page
+    const route = (path) => TABS.findIndex((t) => t.url === path);
 
     const selectMenu = (i, silent) => {
       const next = (i + TABS.length) % TABS.length;
@@ -139,64 +155,6 @@
       menuBtns.forEach((b, k) => b.classList.toggle("is-active", k === menuIdx));
     };
 
-    function extrasHtml(d) {
-      let html = "";
-      if (d.type === "mail") html += `<a class="big-mail" href="mailto:${EMAIL}">${EMAIL}</a>`;
-      if (d.bul) html += `<ul class="bul">${d.bul.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>`;
-      if (d.facts) html += `<dl class="facts">${d.facts.map((f) => (Array.isArray(f) ? f : [f.label, f.value])).map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("")}</dl>`;
-      if (d.tags) html += `<ul class="tags">${d.tags.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>`;
-      // Logo wall: inline SVG icons from the build (Simple Icons), text tiles where there is no icon
-      if (d.logos) html += `<div class="logos">${d.logos.map((g) => `<section><h4>${esc(g.group)}</h4><ul>${g.items.map((it) =>
-        `<li title="${esc(it.name)}">${it.svg || `<span class="wm">${esc(it.name)}</span>`}${it.svg ? `<span class="nm">${esc(it.name)}</span>` : ""}</li>`).join("")}</ul></section>`).join("")}</div>`;
-      return html;
-    }
-
-    // ── Team: a single designed page (content from team/_index.md) ──
-    function teamHtml(t) {
-      const m = t.team, last = m.headline.length - 1;
-      const L = m.location || {};
-      const zones = Array.from({ length: 24 }, (_, i) => i - 11); // UTC−11 … UTC+12
-      return `<div class="tm">
-        <header class="tm__hero">
-          <div>
-            <span class="pane__kicker caps">0${tabIdx + 1} / ${esc(t.label)}</span>
-            <h2 class="tm__headline">${m.headline.map((l, i) => `<span${i === last ? ' class="hl"' : ""}>${esc(l)}</span>`).join("")}</h2>
-          </div>
-          <div class="tm__lede">
-            <p>${esc(m.lede)}</p>
-            <p class="tm__live caps"><i></i>${esc(L.city || "")} · <span data-clock="${esc(L.timezone || "")}">--:--</span> local</p>
-          </div>
-        </header>
-
-        <section class="tm__pillars">${(m.pillars || []).map((p, i) => `
-          <article><span class="tm__num" aria-hidden="true">0${i + 1}</span><h3>${esc(p.title)}</h3><p>${esc(p.text)}</p></article>`).join("")}
-        </section>
-
-        <section class="tm__eras">
-          <h3 class="tm__label caps">${esc(m.erasTitle || "")}</h3>
-          <ol>${(m.eras || []).map((e, i, a) => `<li${i === a.length - 1 ? ' class="now"' : ""}><i></i><b>${esc(e.label)}</b><span>${esc(e.text)}</span></li>`).join("")}</ol>
-        </section>
-
-        <section class="tm__story">
-          <blockquote>${m.story}</blockquote>
-          <div class="tm__place">
-            <h3>${esc(L.city || "")}</h3>
-            <p class="caps">${esc(L.country || "")} · ${esc(L.coords || "")}</p>
-            <div class="tm__tz" aria-label="Time zones, home base UTC${L.utc}">${zones.map((z) =>
-              `<i class="${z === L.utc ? "home" : z >= -8 && z <= 2 ? "near" : ""}" title="UTC${z >= 0 ? "+" : "−"}${Math.abs(z)}"></i>`).join("")}</div>
-            <div class="tm__tzlabels caps"><span>Americas</span><span>UTC${L.utc >= 0 ? "+" : "−"}${Math.abs(L.utc)}</span><span>Europe</span></div>
-            <p class="tm__note">${esc(L.note || "")}</p>
-          </div>
-        </section>
-
-        <section class="tm__logos">
-          <h3 class="tm__label caps">${esc(m.logosTitle || "")}</h3>
-          ${(m.logos || []).map((g) => `<ul aria-label="${esc(g.group)}">${g.items.map((l) => `<li title="${esc(l.name)}">${l.svg || `<span>${esc(l.name)}</span>`}</li>`).join("")}</ul>`).join("")}
-        </section>
-
-        ${m.cta ? `<footer class="tm__cta"><h3>${esc(m.cta.title)}</h3><button type="button" class="tm__btn" data-goto="contact">${esc(m.cta.button)} <span aria-hidden="true">▶</span></button></footer>` : ""}
-      </div>`;
-    }
     // Live local time for any [data-clock] on screen
     function tickClocks() {
       document.querySelectorAll("[data-clock]").forEach((el) => {
@@ -208,17 +166,6 @@
     // ── Contact: a small terminal that composes an email ──
     // Flow: name → email → company (optional) → message (multi-line) → confirm → send.
     // Sends via params.contactEndpoint (JSON POST) when set, otherwise opens a mailto: link.
-    function terminalHtml(t) {
-      return `<div class="term-wrap">
-        <div class="term" role="region" aria-label="Contact terminal">
-          <div class="term__bar"><i></i><i></i><i></i><span>guest@event-0: ~/contact</span></div>
-          <div class="term__body">
-            <div class="term__out" aria-live="polite"></div>
-            <label class="term__line"><span class="term__prompt"></span><input class="term__in" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Terminal input"></label>
-          </div>
-        </div>
-      </div>`;
-    }
     let activeGame = null;   // the hidden raycaster, while it runs (gets gamepad input)
     function mountTerminal(root, cfg) {
       const out = root.querySelector(".term__out"), input = root.querySelector(".term__in"), promptEl = root.querySelector(".term__prompt");
@@ -398,39 +345,19 @@
       $("#scene-cap-d").textContent = (c.text || "").replace("{count}", (lab.density * lab.density).toLocaleString("en-US"));
     }
 
-    function renderDetail(dir) {
-      const t = TABS[tabIdx], r = t.rows[rowIdx];
-      if (!r) return;
-      const d = r.d;
-      if (t.layout === "grid") {
-        const info = pane.querySelector("#lvl-info");
-        info.innerHTML = `<span class="k caps">Stage ${pad2(rowIdx + 1)} / ${pad2(t.rows.length)}</span><h3>${esc(r.label)}</h3><p class="m">${esc([d.role, d.platforms, r.meta].filter(Boolean).join(" · "))}</p>`;
-        anim(info, dir || "swap-f");
-        desc.textContent = [r.label, d.role, d.platforms].filter(Boolean).join(" · ");
-        return;
-      }
-      let html = "";
-      if (d.type === "game") {
-        html = `<div class="art" style="--art:${d.art}"></div>
-          <span class="detail__k caps">${esc(r.meta)}</span><h3>${esc(r.label)}</h3>
-          <dl class="facts">${d.role ? `<dt>Our role</dt><dd>${esc(d.role)}</dd>` : ""}<dt>Platforms</dt><dd>${esc(d.platforms)}</dd><dt>Released</dt><dd>${esc(r.meta)}</dd></dl>
-          <p class="note">Credits include work at previous studios. All trademarks belong to their respective owners.</p>`;
-      } else if (d.type === "client") {
-        html = `<div class="logo-slot">Logo</div><span class="detail__k caps">Client</span><h3>${esc(r.label)}</h3>${d.bodyHtml || `<p>${esc(d.body)}</p>`}`;
-      } else {
-        html = `<span class="detail__k caps">${esc(d.k)}</span><h3>${esc(r.label)}</h3>${d.bodyHtml || `<p>${esc(d.body)}</p>`}`;
-        html += extrasHtml(d);
-      }
-      if (r.href) html += `<p class="action"><span class="hint"><span class="glyph glyph--a"><span data-kb>Enter</span><span data-pad>A</span></span>${esc(d.action || "Open email")}</span></p>`;
-      detail.innerHTML = html;
-      anim(detail, dir || "swap-f");
-      desc.textContent = d.body ? d.body.split(". ")[0].replace(/\.$/, "") + "." : `${r.label} · ${r.meta}`;
+    // The selected item's details: its hidden block in the section's screen, shown in the detail panel (or the grid's corner)
+    function renderDetail(dir, instant) {
+      const src = pane.querySelector(`[data-detail="${rowIdx}"]`);
+      if (!src) return;
+      const target = TABS[tabIdx].layout === "grid" ? pane.querySelector("#lvl-info") : detail;
+      if (instant && target.childElementCount) return;   // the page arrived with it
+      target.innerHTML = src.innerHTML;
+      if (!instant) anim(target, dir || "swap-f");
     }
 
     // byPointer: selected by hover/click, so don't scroll the list (only keyboard/gamepad moves scroll it)
     const selectRow = (i, quiet, byPointer) => {
-      const rows = TABS[tabIdx].rows;
-      const next = Math.max(0, Math.min(rows.length - 1, i));
+      const next = Math.max(0, Math.min(TABS[tabIdx].items - 1, i));
       if (next !== i) Sound.play("bump");
       if (next === rowIdx && quiet !== true && pane.querySelector(".row.is-active, .cell.is-active")) return;
       if (next !== rowIdx) Sound.play("move");
@@ -440,91 +367,80 @@
       renderDetail();
     };
 
-    function renderTab(i, dir) {
+    // ── Sections: each page arrives with its own section's screen (layouts/_partials/pane.html); the others are
+    // fetched from their pages once, in the background, and swapped in, so switching never reloads the page ──
+    const panes = {};      // section id → its screen's markup
+    const loading = {};
+    function loadPane(t) {
+      return (loading[t.id] ||= fetch(t.url)
+        .then((r) => { if (!r.ok) throw new Error(r.status); return r.text(); })
+        .then((html) => { panes[t.id] = new DOMParser().parseFromString(html, "text/html").getElementById("pane").innerHTML; })
+        .catch((err) => { delete loading[t.id]; throw err; }));
+    }
+
+    // instant: the page just loaded on it
+    function renderTab(i, dir, instant) {
       tabIdx = (i + TABS.length) % TABS.length;
       rowIdx = 0;
       const t = TABS[tabIdx];
       tabBtns.forEach((b, k) => b.setAttribute("aria-selected", k === tabIdx));
       tabBtns[tabIdx].scrollIntoView({ block: "nearest", inline: "nearest" });
-      meta.textContent = `0${tabIdx + 1} / 0${TABS.length}`;
-      const grid = t.layout === "grid", page = t.layout === "page" || t.layout === "team" || t.layout === "terminal";
+      meta.textContent = `${pad2(tabIdx + 1)} / ${pad2(TABS.length)}`;
+      if (state === "sub") syncUrl();
+      if (dir) { Sound.play("tab"); kick(); }
+      if (panes[t.id] != null) return showPane(dir, instant);
+      // Not fetched yet (the prefetch usually gets there first): show it the moment it arrives, or go to its page
+      pane.replaceChildren(); detail.replaceChildren();
+      loadPane(t).then(() => TABS[tabIdx] === t && showPane(dir), () => (location.href = t.url));
+    }
+    function showPane(dir, instant) {
+      const t = TABS[tabIdx], grid = t.layout === "grid", page = t.layout === "team" || t.layout === "terminal";
       body.classList.toggle("is-grid", grid);
       body.classList.toggle("is-page", page);
       body.classList.toggle("is-term", t.layout === "terminal");
       $("#nav-kb").textContent = grid ? "↑↓←→" : "↑↓";
-      const head = `<span class="pane__kicker caps">0${tabIdx + 1} / ${esc(t.label)}</span><h2>${esc(t.label)}</h2><p class="pane__intro">${esc(t.intro)}</p>`;
-      if (page) {
-        // Everything on one scrollable page; no list/detail
-        pane.innerHTML = t.terminal ? `<div class="tc"><div class="tc__side">${head}<p class="term__alt">No terminal person? Email us at <a href="mailto:${EMAIL}">${EMAIL}</a></p></div>${terminalHtml(t)}</div>` : t.team ? teamHtml(t) : `<div class="pg"><div>${head}</div><div class="pg__body">${t.rows.map((r) =>
-          `<section class="pg__block${r.d.logos ? " pg__block--wide" : ""}"><span class="detail__k caps">${esc(r.meta || "")}</span><h3>${esc(r.label)}</h3>${r.d.bodyHtml || ""}${extrasHtml(r.d)}</section>`).join("")}</div></div>`;
-        tickClocks();
-        if (t.terminal) mountTerminal(pane, t.terminal);
-        pane.querySelectorAll("[data-goto]").forEach((b) => b.addEventListener("click", () => {
-          const i = TABS.findIndex((x) => x.id === b.dataset.goto);
-          if (i >= 0) renderTab(i, i > tabIdx ? 1 : -1);
-        }));
-        anim(pane, dir === -1 ? "swap-l" : dir === 1 ? "swap-r" : "swap-f");
-        desc.textContent = t.blurb;
-        $("#nav-kb").textContent = "↑↓";
-        if (state === "sub") history.replaceState({ sub: t.id }, "", "#" + t.id);
-        if (dir) { Sound.play("tab"); kick(); }
-        applyScene();
-        return;
-      }
-      pane.innerHTML = grid
-        ? `<div class="lvl"><div class="lvl__head"><div>${head}</div><div class="lvl__info" id="lvl-info" aria-live="polite"></div></div>
-            <div class="lvl__grid has-active" role="listbox" aria-label="${esc(t.label)}">${t.rows.map((r, k) =>
-              `<button class="cell${k === 0 ? " is-active" : ""}" type="button" role="option" data-i="${k}"${r.d.poster ? ` data-poster="${r.d.poster}"` : ""} style="--art:${r.d.art}">
-                <span class="num" aria-hidden="true">${pad2(k + 1)}</span>
-                <span class="stage caps"><span>Stage ${pad2(k + 1)}</span><span>${esc(r.d.tag || r.meta)}</span></span>
-                <span><span class="t">${esc(r.label)}</span><span class="m caps">${esc(r.d.platforms)}</span></span></button>`).join("")}</div></div>`
-        : `${head}<div class="rows" role="listbox" aria-label="${esc(t.label)}">${(() => {
-            // Optional group labels (e.g. "What we do" / "How we engage"); numbering restarts per group
-            let html = "", n = 0, last;
-            t.rows.forEach((r, k) => {
-              if (r.group !== last) { last = r.group; n = 0; if (r.group) html += `<p class="rows__group caps" role="presentation">${esc(r.group)}</p>`; }
-              n++;
-              html += `<button class="row${k === 0 ? " is-active" : ""}" type="button" role="option" data-i="${k}"><span class="n">${pad2(n)}</span><span class="label">${esc(r.label)}</span><span class="meta">${esc(r.meta)}</span></button>`;
-            });
-            return html;
-          })()}</div>`;
-      // Real poster art: use assets/posters/<slug>.jpg when it exists, otherwise keep the placeholder
-      pane.querySelectorAll(".cell[data-poster]").forEach((c) => {
-        const img = new Image();
-        img.onload = () => { c.style.setProperty("--poster", `url("${c.dataset.poster}")`); c.classList.add("has-poster"); };
-        img.src = c.dataset.poster;
-      });
+      // Fresh markup every time (so listeners never pile up), except the screen the page arrived with
+      if (!instant || pane.dataset.section !== t.id) { pane.innerHTML = panes[t.id]; pane.dataset.section = t.id; }
+      const swap = dir === -1 ? "swap-l" : dir === 1 ? "swap-r" : "swap-f";
+      if (!instant) anim(pane, swap);
       pane.querySelectorAll(".row, .cell").forEach((b) => {
         const k = +b.dataset.i;
+        b.classList.toggle("is-active", k === rowIdx);
         b.addEventListener("mouseenter", () => { if (lastInput !== "pad") selectRow(k, false, true); });
         b.addEventListener("click", () => {
           selectRow(k, false, true);
-          if (grid) { Sound.play("select"); return; }
-          activate();
-          if (narrow.matches) detail.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+          if (grid) Sound.play("select");
+          else if (narrow.matches) detail.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
         });
       });
-      anim(pane, dir === -1 ? "swap-l" : dir === 1 ? "swap-r" : "swap-f");
-      renderDetail(dir === -1 ? "swap-l" : dir === 1 ? "swap-r" : "swap-f");
-      if (state === "sub") history.replaceState({ sub: t.id }, "", "#" + t.id);
-      if (dir) { Sound.play("tab"); kick(); }
+      pane.querySelectorAll("[data-goto]").forEach((b) => b.addEventListener("click", (e) => {
+        const i = TABS.findIndex((x) => x.id === b.dataset.goto);
+        if (i < 0 || !plainClick(e)) return;
+        e.preventDefault();
+        renderTab(i, i > tabIdx ? 1 : -1);
+      }));
+      tickClocks();
+      if (t.terminal) mountTerminal(pane, t.terminal);
+      if (!page) renderDetail(swap, instant);
       applyScene();
     }
 
-    function openSub(i, fromHistory) {
-      renderTab(i, 0);
+    function openSub(i, fromHistory, instant) {
+      renderTab(i, 0, instant);
       selectMenu(i, true);
-      kick();
-      setState("sub");
-      if (!fromHistory) { history.pushState({ sub: TABS[tabIdx].id }, "", "#" + TABS[tabIdx].id); pushed = true; }
+      if (!instant) kick();
+      setState("sub", instant);
+      syncUrl(!fromHistory);
+      if (!fromHistory) pushed = true;
     }
     function back(fromHistory) {
       if (state === "sub") {
         setState("menu");
         if (!fromHistory) {
           if (pushed) { pushed = false; history.back(); }
-          else history.replaceState(null, "", location.pathname);
+          else syncUrl();
         }
+        document.title = DATA.title;
         menuBtns[menuIdx].focus({ preventScroll: true });
       } else if (state === "menu") {
         setState("splash");
@@ -533,8 +449,6 @@
     function activate() {
       if (state === "splash") return setState("menu");
       if (state === "menu") return openSub(menuIdx);
-      const r = TABS[tabIdx].rows[rowIdx];
-      if (r && r.href) { Sound.play("select"); location.href = r.href; }
     }
     const isGrid = () => state === "sub" && TABS[tabIdx].layout === "grid";
     // Columns of the poster grid, read from the live layout (it reflows with the window)
@@ -546,7 +460,7 @@
       if (state === "menu") { selectMenu(menuIdx + d); menuBtns[menuIdx].focus({ preventScroll: true }); }
       else if (state === "sub") {
         // Single-page screens (Team, Contact…) have no list: up/down scroll them instead
-        if (["page", "team", "terminal"].includes(TABS[tabIdx].layout) || !TABS[tabIdx].rows.length) {
+        if (["page", "team", "terminal"].includes(TABS[tabIdx].layout) || !TABS[tabIdx].items) {
           // Accumulate presses so holding the key keeps scrolling smoothly
           const el = narrow.matches ? document.querySelector(".sub") : pane.querySelector(".pg__body, .tm, .term__body");
           if (!el) return;
@@ -558,7 +472,7 @@
         }
         if (!isGrid()) return selectRow(rowIdx + d);
         const next = rowIdx + d * gridCols();
-        if (next < 0 || next >= TABS[tabIdx].rows.length) return Sound.play("bump");
+        if (next < 0 || next >= TABS[tabIdx].items) return Sound.play("bump");
         selectRow(next);
       }
     };
@@ -566,7 +480,7 @@
     const side = (d) => {
       if (!isGrid()) return;
       const cols = gridCols(), col = rowIdx % cols, next = rowIdx + d;
-      if (col + d < 0 || col + d >= cols || next >= TABS[tabIdx].rows.length) return Sound.play("bump");
+      if (col + d < 0 || col + d >= cols || next >= TABS[tabIdx].items) return Sound.play("bump");
       selectRow(next);
     };
     const tab = (d) => { if (state === "sub") renderTab(tabIdx + d, d); };
@@ -577,9 +491,13 @@
     menuBtns.forEach((b, i) => {
       b.addEventListener("mouseenter", () => selectMenu(i));
       b.addEventListener("focus", () => selectMenu(i));
-      b.addEventListener("click", () => openSub(i));
+      b.addEventListener("click", (e) => { if (!plainClick(e)) return; e.preventDefault(); openSub(i); });
     });
-    tabBtns.forEach((b, i) => b.addEventListener("click", () => { if (i !== tabIdx) renderTab(i, i > tabIdx ? 1 : -1); }));
+    tabBtns.forEach((b, i) => b.addEventListener("click", (e) => {
+      if (!plainClick(e)) return;
+      e.preventDefault();
+      if (i !== tabIdx) renderTab(i, i > tabIdx ? 1 : -1);
+    }));
     document.querySelectorAll("[data-tab-step]").forEach((b) => b.addEventListener("click", () => tab(+b.dataset.tabStep)));
     $("#back").addEventListener("click", () => back());
     $("#brand").addEventListener("click", () => back());
@@ -611,9 +529,8 @@
 
     // ── Input: browser history (Back button = B) ─────────
     addEventListener("popstate", () => {
-      const id = location.hash.slice(1);
-      const i = TABS.findIndex((t) => t.id === id);
-      if (i >= 0) { pushed = false; if (state !== "sub") openSub(i, true); else renderTab(i, 0); }
+      const to = route(location.pathname);
+      if (to >= 0) { pushed = false; if (state !== "sub") openSub(to, true); else renderTab(to, 0); }
       else if (state === "sub") { pushed = false; back(true); }
     });
 
@@ -807,6 +724,16 @@
     // ── Boot ─────────────────────────────────────────────
     selectMenu(0, true);
     applyScene();
-    const deep = TABS.findIndex((t) => "#" + t.id === location.hash);
-    if (deep >= 0) { setState("menu"); openSub(deep, true); }
+    // A section's page shows that section straight away, as if you'd navigated there (old #section links too).
+    // The body arrives as is-sub + is-boot from the server (layouts/all.html), so nothing plays in between.
+    const legacy = TABS.findIndex((t) => "#" + t.id === location.hash);
+    const deep = route(location.pathname) >= 0 ? route(location.pathname) : legacy;
+    if (pane.dataset.section) panes[pane.dataset.section] = pane.innerHTML;
+    if (deep >= 0) openSub(deep, true, true);
+    else setState("splash", true);
+    // Fetch the other sections' screens once the page has settled, so switching to them is instant
+    // (with a timeout: the background renders every frame, so the browser may never be fully idle)
+    const prefetch = () => TABS.forEach((t) => panes[t.id] == null && loadPane(t).catch(() => {}));
+    if (window.requestIdleCallback) requestIdleCallback(prefetch, { timeout: 1500 }); else setTimeout(prefetch, 1000);
+    requestAnimationFrame(() => requestAnimationFrame(() => body.classList.remove("is-boot")));
   })();
