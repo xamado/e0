@@ -9,11 +9,19 @@
   const BASE_YAW = .5, PITCH = .2;       // face-on view of the butterfly's wings
 
   function createEngine(canvas) {
-    const gl = canvas.getContext("webgl2", { antialias: false, alpha: false, powerPreference: "high-performance" });
+    const attrs = { antialias: false, alpha: false, powerPreference: "high-performance" };
+    // No graphics chip (WebGL drawn on the CPU): the browser refuses a context that would be that slow, or names
+    // its software renderer. The particles would then take over the processor, so only the backdrop draws.
+    let gl = canvas.getContext("webgl2", { ...attrs, failIfMajorPerformanceCaveat: true });
+    let software = !gl;
+    if (!gl) gl = canvas.getContext("webgl2", attrs);
     if (!gl) return null;
+    const dbg = gl.getExtension("WEBGL_debug_renderer_info");
+    if (dbg && /swiftshader|llvmpipe|softpipe|software|basic render/i.test(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL))) software = true;
     const S = window.E0_SHADERS;
     // Float render targets hold the simulation state; without them only the backdrop draws
     const floatOK = !!gl.getExtension("EXT_color_buffer_float");
+    const particles = floatOK && !software;
 
     // ── Programs ──────────────────────────────────────
     function compile(vsSrc, fsSrc, label) {
@@ -210,7 +218,7 @@
       gl.uniform1f(b.u("uGrid"), o.grid || 0);
       for (const k of ["top", "mid", "hor", "sunCol"]) gl.uniform3fv(b.u("u" + k[0].toUpperCase() + k.slice(1)), o.palette[k]);
       fullscreen();
-      if (floatOK) drawParticles(o, w, h, scale);
+      if (particles) drawParticles(o, w, h, scale);
       if (timing) gl.endQuery(timer.TIME_ELAPSED_EXT);
 
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -230,7 +238,7 @@
     resize();
     addEventListener("resize", resize);
 
-    return { render, setParticles, stats, floatOK };
+    return { render, setParticles, stats, floatOK, software };
   }
 
   window.E0Engine = { createEngine };

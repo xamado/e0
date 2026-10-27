@@ -22,6 +22,29 @@
   <meta property="og:description" content="{{ $desc }}">
   <meta property="og:type" content="website">
   <meta property="og:url" content="{{ .Permalink }}">
+  <meta property="og:site_name" content="{{ site.Home.Title }}">
+  {{- /* Share preview: the title screen (static/og.jpg, 1200×630) */}}
+  <meta property="og:image" content="{{ "og.jpg" | absURL }}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Event Zero title screen: the logo over a Lorenz attractor particle simulation">
+  <meta name="twitter:card" content="summary_large_image">
+  {{- if .IsHome }}
+  {{- /* For search engines: who the studio is (name, logo, contact, home base) */}}
+  {{- $L := (site.GetPage "/team").Params.location }}
+  {{- $org := dict
+    "@type" "Organization"
+    "@id" (printf "%s#org" site.Home.Permalink)
+    "name" site.Home.Title
+    "url" site.Home.Permalink
+    "logo" ("logo.png" | absURL)
+    "description" site.Params.description
+    "email" site.Params.email
+    "address" (dict "@type" "PostalAddress" "addressLocality" $L.city "addressCountry" $L.country)
+  }}
+  {{- $web := dict "@type" "WebSite" "name" site.Home.Title "url" site.Home.Permalink "publisher" (dict "@id" (printf "%s#org" site.Home.Permalink)) }}
+  <script type="application/ld+json">{{ dict "@context" "https://schema.org" "@graph" (slice $org $web) | jsonify | safeJS }}</script>
+  {{- end }}
   <link rel="icon" href="{{ "favicon.svg" | relURL }}" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

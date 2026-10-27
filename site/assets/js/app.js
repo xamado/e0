@@ -340,7 +340,7 @@
       if (lab.density === capDensity) return;
       capDensity = lab.density;
       const c = DATA.caption || {};
-      $("#scene-cap").hidden = !c.title;
+      $("#scene-cap").hidden = !c.title || !engine || engine.software || !engine.floatOK;   // it describes the particles
       $("#scene-cap-t").textContent = c.title || "";
       $("#scene-cap-d").textContent = (c.text || "").replace("{count}", (lab.density * lab.density).toLocaleString("en-US"));
     }
@@ -679,7 +679,8 @@
       $("#lab-pbright").value = lab.pbright; $("#lab-pbright-out").textContent = lab.pbright.toFixed(2);
       $("#lab-density").value = String(lab.density);
       $("#lab-pcolor").value = String(lab.pcolor);
-      if (engine && !engine.floatOK) $("#lab-pnote").textContent = "This browser can't run the particle simulation (no float render targets), so only the backdrop shows.";
+      if (engine && engine.software) $("#lab-pnote").textContent = "This browser is drawing without a graphics chip, so the particle simulation is off and only the backdrop shows.";
+      else if (engine && !engine.floatOK) $("#lab-pnote").textContent = "This browser can't run the particle simulation (no float render targets), so only the backdrop shows.";
       $("#lab-autores").checked = lab.autoRes;
       $("#lab-grid").checked = lab.grid;
       $("#lab-gridamt").value = lab.gridAmt; $("#lab-gridamt-out").textContent = lab.gridAmt.toFixed(3);
